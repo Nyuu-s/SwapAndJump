@@ -2,14 +2,15 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Launch",
+            "name": "(Windows) Launch",
             "type": "cppvsdbg",
             "request": "launch",
             "program": "${workspaceFolder}/JumpAndSwap.exe",
             "args": [],
-            "cwd": "${workspaceFolder}",
+            "stopAtEntry": false,
+            "cwd": "${fileDirname}",
+            "environment": [],
             "console": "integratedTerminal"
         }
-
     ]
 }

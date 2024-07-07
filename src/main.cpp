@@ -3,7 +3,7 @@
 
 
 
-#include <stdio.h>
+#include "SAJ_lib.h"
 
 //########################################################################
 // PLATFORM GLOBALS
@@ -95,6 +95,11 @@ int main()
     while (running)
     {
         update_platform_window();
+        SAJ_TRACE("green");
+        SAJ_DEBUG("cyan");
+        SAJ_WARN("yellow");
+        SAJ_ERROR("red");
+        SAJ_ASSERT(false,"assertion not hit!");
     }
     return 0;
 }
