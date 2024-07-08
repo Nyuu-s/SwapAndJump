@@ -55,3 +55,4 @@ build
 settings.json
 .clangd
 .vs
+c_cpp_properties.json
