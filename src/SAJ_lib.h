@@ -1,6 +1,13 @@
 #pragma once
 
 #include <stdio.h>
+
+// malloc
+#include <stdlib.h>
+
+//memset
+#include <string.h>
+
 //########################################################################
 // DEFINES
 //########################################################################
@@ -82,3 +89,43 @@ void _log(char* prefix, char* msg, TextColor textColor, Args... args)
         SAJ_ERROR("ASSERTION HIT")          \
     }                                       \
 }                                           
+
+
+//########################################################################
+// BUMP ALLOCATOR
+//########################################################################
+struct BumpAllocator
+{
+    size_t capacity;
+    size_t used;
+    char * memory;
+};
+
+BumpAllocator make_bump_allocator(size_t size)
+{
+    BumpAllocator bump_allocator = {};
+    //void pointer can be casted to any types
+    bump_allocator.memory = (char*) malloc(size);
+    if (bump_allocator.memory)
+    {
+        bump_allocator. capacity = size;
+        memset(bump_allocator.memory, 0, size);
+    }
+    else
+    {
+        SAJ_ASSERT(false, "Memory allocation failed !");
+    }
+    return bump_allocator;
+}
+
+char* bump_alloc(BumpAllocator* BumpAllocator, size_t size)
+{
+    char* result = nullptr;
+    //round to nearest "high" multiple of M-1 (8 here)
+    size_t allignedSize = (size + 7) & ~ 7;
+
+}
+
+//########################################################################
+// FILE IO
+//########################################################################
