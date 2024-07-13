@@ -134,6 +134,8 @@ char* bump_alloc(BumpAllocator* BumpAllocator, size_t size)
     {
         SAJ_ASSERT(false, "BumpAllocator is Full")
     }
+
+    return result;
 }
 
 //########################################################################
@@ -149,7 +151,7 @@ long get_timestamp(char* file)
 
 bool do_file_exists(char* filePath)
 {
-    auto file = fopen(filePath, "rb");
+    FILE* file = fopen(filePath, "rb");
     if(!file)
     {
         return false;

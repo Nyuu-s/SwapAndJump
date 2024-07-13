@@ -1,5 +1,5 @@
 #!/bin/bash
-libs=-luser32
-warnings="-Wno-writable-strings -Wno-format-security"
-
-clang++ -g src/main.cpp -oJumpAndSwap.exe $libs $warnings 
+libs="-luser32 -lopengl32"
+warnings="-Wno-writable-strings -Wno-format-security -Wno-deprecated-declarations"
+includes="-Ithird_party -Ithird_party/Include"
+clang++ $includes -g src/main.cpp -oJumpAndSwap.exe $libs $warnings 
