@@ -92,6 +92,7 @@ void update_platform_window()
 int main()
 {
     platform_create_window(1200,900, "hello world");
+
     while (running)
     {
         update_platform_window();

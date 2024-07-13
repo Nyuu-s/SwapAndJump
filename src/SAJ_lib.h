@@ -8,6 +8,8 @@
 //memset
 #include <string.h>
 
+//Timestamp
+#include <sys/stat.h>
 //########################################################################
 // DEFINES
 //########################################################################
@@ -123,9 +125,154 @@ char* bump_alloc(BumpAllocator* BumpAllocator, size_t size)
     char* result = nullptr;
     //round to nearest "high" multiple of M-1 (8 here)
     size_t allignedSize = (size + 7) & ~ 7;
-
+    if(BumpAllocator->used + allignedSize <= BumpAllocator->capacity)
+    {
+        result = BumpAllocator->memory + BumpAllocator->used;
+        BumpAllocator->used += allignedSize;
+    }
+    else
+    {
+        SAJ_ASSERT(false, "BumpAllocator is Full")
+    }
 }
 
 //########################################################################
 // FILE IO
 //########################################################################
+
+long get_timestamp(char* file)
+{
+    struct stat file_stat = {};
+    stat(file, &file_stat);
+    return file_stat.st_mtime;
+}
+
+bool do_file_exists(char* filePath)
+{
+    auto file = fopen(filePath, "rb");
+    if(!file)
+    {
+        return false;
+    }
+    fclose(file);
+    return true;
+}
+
+int get_file_size(char* filePath)
+{
+    SAJ_ASSERT(filePath, "No FilePath supllied!");
+    long fileSize = 0;
+    auto file = fopen(filePath, "rb");
+    if(!file)
+    {
+        SAJ_ERROR("Failed to open file ! %s", filePath)
+        return false;
+    }
+
+    //seek the end
+    fseek(file, 0, SEEK_END);
+    fileSize = ftell(file);
+    //seek back to begin
+    fseek(file, 0, SEEK_SET);
+    fclose(file);
+
+    return fileSize;
+}
+
+char* read_file(char* filePath, int* fileSize, char* buffer)
+{
+    SAJ_ASSERT(filePath, "No filePath provided")
+    SAJ_ASSERT(fileSize, "No fileSize provided")
+    
+    *fileSize = 0;
+    auto file = fopen(filePath, "rb");
+    if(!file)
+    {
+        SAJ_ERROR("Failed to open file ! %s", filePath)
+        return nullptr;
+    }
+
+    fseek(file, 0, SEEK_END);
+    *fileSize = ftell(file);
+    //seek back to begin
+    fseek(file, 0, SEEK_SET);
+
+    //zero out memory
+    memset(buffer, 0, *fileSize +1);
+    //read file
+    fread(buffer, sizeof(char), *fileSize, file);
+
+    fclose(file);
+
+    return buffer;
+
+}
+
+char* read_file(char* filePath, int* fileSize, BumpAllocator* bumpAllocator)
+{
+    char* file = nullptr;
+    long computedSize = get_file_size(filePath);
+    if(computedSize)
+    {
+        char* buffer = bump_alloc(bumpAllocator, computedSize + 1);
+        file = read_file(filePath,fileSize, buffer);
+    }
+    return file;
+}
+
+void write_file(char* filePath, char* buffer, int size)
+{
+    SAJ_ASSERT(filePath, "No filePath provided");
+    SAJ_ASSERT(buffer, "No buffer provided");
+    SAJ_ASSERT(size, "No size provided");
+
+    auto file = fopen(filePath, "wb");
+    if(!file)
+    {
+        SAJ_ERROR("Failed to open File %s", filePath)
+    }
+    fwrite(buffer, sizeof(char), size, file);
+    fclose(file);
+}
+
+bool copy_file(char* fileName, char* outputName, char* buffer)
+{
+    SAJ_ASSERT(fileName, "No fileName provided")
+    SAJ_ASSERT(outputName, "No outputName provided")
+    
+    int fileSize = 0;
+    char* data = read_file(fileName, &fileSize, buffer);
+    
+    auto file = fopen(outputName, "rb");
+    if(!file)
+    {
+        SAJ_ERROR("Failed to open file ! %s", fileName)
+        return false;
+    }
+
+    int result = fwrite(data, sizeof(char), fileSize, file);
+    if(!result)
+    {
+        SAJ_ERROR("Failed openoing output file : %s", outputName);
+        return false;
+    }
+
+    fclose(file);
+
+    return true;
+
+
+}
+
+bool copy_file(char* fileName, char* outputName, BumpAllocator* bumpAllocator)
+{
+    char* file = 0;
+    long fileSize = get_file_size(fileName);
+    if(fileSize)
+    {
+        char* buffer = bump_alloc(bumpAllocator, fileSize +1);
+        copy_file(fileName, outputName, buffer);
+    }
+
+    return true;
+}
