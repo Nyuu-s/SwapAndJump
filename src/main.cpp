@@ -1,6 +1,9 @@
 #include "SAJ_lib.h"
 #include "platform.h"
 
+#define APIENTRY
+#include "glcorearb.h"
+
 #ifdef _WIN32
 #include "win32_platform.cpp"
 #endif
