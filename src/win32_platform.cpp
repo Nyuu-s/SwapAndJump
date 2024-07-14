@@ -13,6 +13,7 @@
 //########################################################################
 static const char* W_MAIN_WINDOW_CLASS_NAME = "WMainWindow";
 static HWND W_MAIN_WINDOW_HANDLE;
+static HDC W_DEVICE_CONTEXT_HANDLE;
 
 //########################################################################
 // PLATFORM IMPLEMENTATIONS
@@ -26,8 +27,14 @@ LRESULT CALLBACK windows_window_callback(HWND window, UINT msg, WPARAM wParam, L
     case WM_CLOSE:
         running = false;
         break;
-    case WM_KEYDOWN:
+    case WM_SIZE:
+    {
+        RECT rect = {};
+        GetClientRect(W_MAIN_WINDOW_HANDLE, &rect);
+        input.screenSizeX = rect.right - rect.left;
+        input.screenSizeY = rect.bottom - rect.top;
         break;
+    }
     default:
         result = DefWindowProcA(window, msg, wParam, lParam);
     }
@@ -109,9 +116,9 @@ bool platform_create_window(int width, int height, char* title)
         }
         //set function for the real window
         wglChoosePixelFormatARB = (PFNWGLCHOOSEPIXELFORMATARBPROC) platform_load_gl_function("wglChoosePixelFormatARB");
-        wglCreateContextAttribs = (PFNWGLCREATECONTEXTATTRIBSARBPROC) platform_load_gl_function("wglCreateContextAttribs");
+        wglCreateContextAttribs = (PFNWGLCREATECONTEXTATTRIBSARBPROC) platform_load_gl_function("wglCreateContextAttribsARB");
 
-        if(!wglCreateContextAttribs || wglChoosePixelFormatARB)
+        if(!wglCreateContextAttribs || !wglChoosePixelFormatARB)
         {
             SAJ_ASSERT(false, "Failed to Create Context Attributes or Chosing pixel format ARB")
             return false;
@@ -139,8 +146,8 @@ bool platform_create_window(int width, int height, char* title)
             return false;
         }
 
-        HDC RealDC = GetDC(W_MAIN_WINDOW_HANDLE);
-        if(!RealDC)
+        W_DEVICE_CONTEXT_HANDLE = GetDC(W_MAIN_WINDOW_HANDLE);
+        if(!W_DEVICE_CONTEXT_HANDLE)
         {
             SAJ_ASSERT(false, "Failed to get HDC")
             return false;
@@ -162,16 +169,16 @@ bool platform_create_window(int width, int height, char* title)
 
         UINT numPixelFormats;
         int pixelFormat = 0;
-        if(!wglChoosePixelFormatARB(RealDC, pixelAttribs, 0, 1, &pixelFormat, &numPixelFormats))
+        if(!wglChoosePixelFormatARB(W_DEVICE_CONTEXT_HANDLE, pixelAttribs, 0, 1, &pixelFormat, &numPixelFormats))
         {
             SAJ_ASSERT(false, "Failed to choose pixel format ARB")
             return false;
         }
 
         PIXELFORMATDESCRIPTOR pfd = {0};
-        DescribePixelFormat(RealDC, pixelFormat, sizeof(PIXELFORMATDESCRIPTOR), &pfd);
+        DescribePixelFormat(W_DEVICE_CONTEXT_HANDLE, pixelFormat, sizeof(PIXELFORMATDESCRIPTOR), &pfd);
 
-        if(!SetPixelFormat(RealDC, pixelFormat, &pfd))
+        if(!SetPixelFormat(W_DEVICE_CONTEXT_HANDLE, pixelFormat, &pfd))
         {
             SAJ_ASSERT(false, "Failed to SetPixelFormat")
             return false;
@@ -184,13 +191,13 @@ bool platform_create_window(int width, int height, char* title)
             WGL_CONTEXT_FLAGS_ARB, WGL_CONTEXT_DEBUG_BIT_ARB,
             0
         };
-        HGLRC rc = wglCreateContextAttribs(RealDC, 0, contextAttribs);
+        HGLRC rc = wglCreateContextAttribs(W_DEVICE_CONTEXT_HANDLE, 0, contextAttribs);
         if(!rc)
         {
             SAJ_ASSERT(false, "Failed to cwglCreateContextAttrib")
             return false;
         }
-        if(!wglMakeCurrent(RealDC, rc))
+        if(!wglMakeCurrent(W_DEVICE_CONTEXT_HANDLE, rc))
         {
             SAJ_ASSERT(false, "Failed to wglMakeCurrent")
             return false;
@@ -210,9 +217,14 @@ void update_platform_window()
     }
 }
 
+void platform_swap_buffers()
+{
+   SwapBuffers(W_DEVICE_CONTEXT_HANDLE); 
+}
+
 void* platform_load_gl_function(char* funcName)
 {
-    PROC proc = wglGetProcAddress("glCreateProgram");
+    PROC proc = wglGetProcAddress(funcName);
     if(!proc)
     {
         //try loading from dll directly, static to ensure only once

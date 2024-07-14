@@ -20,6 +20,12 @@
 #elif __APPLE__
 #define DEBUG_BREAK() _builtin_trap()
 #endif
+
+#define SHIFT_IN_BIT(x) 1 << (x)
+#define KB(x) ((unsigned long long)1024 * x)
+#define MB(x) ((unsigned long long)1024 * KB(x))
+#define GB(x) ((unsigned long long)1024 * MB(x))
+
 //########################################################################
 // LOGGING
 //########################################################################
@@ -142,7 +148,7 @@ char* bump_alloc(BumpAllocator* BumpAllocator, size_t size)
 // FILE IO
 //########################################################################
 
-long get_timestamp(char* file)
+long long get_timestamp(char* file)
 {
     struct stat file_stat = {};
     stat(file, &file_stat);
