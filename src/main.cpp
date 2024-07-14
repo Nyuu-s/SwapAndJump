@@ -1,3 +1,4 @@
+//avoid re6importing windows and defining mean max
 #define APIENTRY
 //to include other function definition like glEnable
 #define GL_GLEXT_PROTOTYPES
@@ -6,7 +7,6 @@
 #include "input.h"
 #include "platform.h"
 
-//avoid re6importing windows and defining mean max
 //opengl core
 #include "glcorearb.h"
 

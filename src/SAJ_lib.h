@@ -94,7 +94,6 @@ void _log(char* prefix, char* msg, TextColor textColor, Args... args)
     {                                       \
         SAJ_ERROR(msg, ##__VA_ARGS__);      \
         DEBUG_BREAK();                      \
-        SAJ_ERROR("ASSERTION HIT")          \
     }                                       \
 }                                           
 
