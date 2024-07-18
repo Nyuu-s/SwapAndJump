@@ -4,8 +4,13 @@
 #define GL_GLEXT_PROTOTYPES
 
 #include "SAJ_lib.h"
+
 #include "input.h"
+
+#include "game.cpp"
+
 #include "platform.h"
+
 
 //opengl core
 #include "glcorearb.h"
@@ -27,6 +32,7 @@ int main()
     while (running)
     {
         update_platform_window();
+        update_game();
         gl_render();
         platform_swap_buffers();
     }

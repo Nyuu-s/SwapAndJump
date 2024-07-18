@@ -1,36 +1,43 @@
 #version 430 core
+//Structs
+struct SpriteTransform
+{
+    ivec2 spriteOffset;
+    ivec2 spriteSize;
+    ivec2 pos;
+    ivec2 size;
+};
+
+
+
 
 //Input
-layout (location = 0) in vec4 fragColor;
-
+layout (std430, binding = 0) buffer TransformSBO
+{
+    SpriteTransform transforms[];
+};
 //Output 
 layout (location = 0) out vec2 textureCoordsOut;
-
+uniform vec2 screenSize;
 
 void main()
 {
+    SpriteTransform sTransform = transforms[gl_InstanceID];
 
+  vec2 vertices[6] =
+  {
+    sTransform.pos,                                        // Top Left
+    vec2(sTransform.pos + vec2(0.0, sTransform.size.y)),    // Bottom Left
+    vec2(sTransform.pos + vec2(sTransform.size.x, 0.0)),    // Top Right
+    vec2(sTransform.pos + vec2(sTransform.size.x, 0.0)),    // Top Right
+    vec2(sTransform.pos + vec2(0.0, sTransform.size.y)),    // Bottom Left
+    sTransform.pos + sTransform.size                        // Bottom Right
+  };
 
-    vec2 vertices[6] = 
-    {
-        //top left
-        vec2(-0.5, 0.5),
-        //bottom left
-        vec2(-0.5, -0.5),
-        //top right
-        vec2(0.5, 0.5),
-        //top right
-        vec2(0.5, 0.5),
-        //bottom left
-        vec2(-0.5, -0.5),
-        //bottom right
-        vec2(0.5, -0.5),
-    };
-
-    float top = 0.0;
-    float bottom = 16.0;
-    float right = 16.0;
-    float left = 0.0;
+    float top = sTransform.spriteOffset.y;
+    float bottom = sTransform.spriteOffset.y + sTransform.spriteSize.y;
+    float right = sTransform.spriteOffset.x + sTransform.spriteSize.x;
+    float left = sTransform.spriteOffset.x;
 
     vec2 textureCoords[6] = 
     {
@@ -41,6 +48,14 @@ void main()
         vec2(left, bottom),
         vec2(right, bottom),
     };
+    //Normilize position to screensize
+    {
+        vec2 vertexPos = vertices[gl_VertexID];
+        vertexPos.y = -vertexPos.y + screenSize.y;
+        vertexPos = 2.0 * (vertexPos / screenSize) - 1.0;
+        gl_Position = vec4(vertexPos, 0.0, 1.0);
+
+    }
+
     textureCoordsOut = textureCoords[gl_VertexID]; 
-    gl_Position = vec4(vertices[gl_VertexID], 1.0, 1.0);
 }
