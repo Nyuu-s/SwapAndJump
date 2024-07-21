@@ -7,7 +7,7 @@
 
 #include "input.h"
 
-#include "game.cpp"
+#include "game.h"
 
 #include "platform.h"
 
@@ -21,20 +21,95 @@
 
 #include "gl_renderer.cpp"
 
+
+
+//########################################################################
+// Game DLL
+//########################################################################*
+typedef decltype(update_game) update_game_type;
+static update_game_type* update_game_ptr;
+//########################################################################
+// Cross Platform functions
+//########################################################################
+void reload_game_dll(BumpAllocator* transientStorage);
+
+
 int main()
 {
     BumpAllocator transientStorage = make_bump_allocator(MB(50));
-    input.screenSizeX = 1200;
-    input.screenSizeY = 720;
-    platform_create_window(input.screenSizeX,input.screenSizeY, "hello world");
+    BumpAllocator persistentStorage = make_bump_allocator(MB(15));
+
+
+
+    input=(Input*)bump_alloc(&persistentStorage, sizeof(Input));
+    renderData = (RenderData*) bump_alloc(&persistentStorage, sizeof(RenderData));
+    gameState = (GameState*) bump_alloc(&persistentStorage, sizeof(GameState));
+
+    if(!input)
+    {
+        SAJ_ERROR("Failed to allocate input");
+        return -1;
+    }
+    if(!renderData)
+    {
+        SAJ_ERROR("Failed to allocate RenderData");
+        return -1;
+    }
+    if(!gameState)
+    {
+        SAJ_ERROR("Failed to allocate gameState");
+        return -1;
+    }
+    input->screenSizeX = 1280;
+    input->screenSizeY = 720;
+    platform_create_window(input->screenSizeX,input->screenSizeY, "hello world");
 
     gl_init(&transientStorage);
     while (running)
     {
+        reload_game_dll(&transientStorage);
         update_platform_window();
-        update_game();
+        update_game(gameState, renderData, input);
         gl_render();
         platform_swap_buffers();
+
+        transientStorage.used = 0;
     }
     return 0;
+}
+
+void update_game(GameState* gameStateIn, RenderData* data, Input* inputIn)
+{
+    update_game_ptr(gameStateIn, data, inputIn);
+}
+
+void reload_game_dll(BumpAllocator* transientStorage)
+{
+    static void* gameDLL;
+    static long long last_edit_timestamp_gamedll;
+
+    long long current_timestamp_gamedll = get_timestamp("game.dll");
+    if(current_timestamp_gamedll > last_edit_timestamp_gamedll)
+    {
+        if(gameDLL)
+        {
+            bool freeResult = platform_free_dynamic_lib(gameDLL);
+            SAJ_ASSERT(freeResult, "Failed to free game.dll");
+            gameDLL = nullptr;
+            SAJ_TRACE("game.dll has been set free")
+        }
+
+        while(!copy_file("game.dll", "game_load.dll", transientStorage))
+        {
+            Sleep(10);
+        }
+        SAJ_TRACE("Copied game.dll into game_load.dll");
+
+        gameDLL = platform_load_dynamic_lib("game_load.dll");
+        SAJ_ASSERT(gameDLL, "Failed to load dynamic lib");
+
+        update_game_ptr = (update_game_type*)platform_load_dynamic_function(gameDLL, "update_game");
+        SAJ_ASSERT(update_game_ptr, "Failed to load dynamic function");
+        last_edit_timestamp_gamedll = current_timestamp_gamedll;
+    }
 }

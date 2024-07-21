@@ -8,7 +8,7 @@
 //########################################################################
 // OpenGL constants
 //########################################################################
-const char* TEXTURE_PATH = "assets/textures/TEXTURE_SKY.png";
+const char* TEXTURE_PATH = "src/assets/textures/TEXTURE_SKY.png";
 
 
 //########################################################################
@@ -20,6 +20,7 @@ struct GLContext
     GLuint textureID;
     GLuint sTransformSBOID;
     GLuint screenSizeID;
+    GLuint orthoProjectionID;
 };
 
 //########################################################################
@@ -59,8 +60,8 @@ bool gl_init(BumpAllocator* transientStorage)
     GLuint vertShaderID = glCreateShader(GL_VERTEX_SHADER);
     GLuint fragShaderID = glCreateShader(GL_FRAGMENT_SHADER);
     int fileSize = 0;
-    char* vertShader = read_file("assets/shaders/quad.vert", &fileSize, transientStorage);
-    char* fragShader = read_file("assets/shaders/quad.frag", &fileSize, transientStorage);
+    char* vertShader = read_file("src/assets/shaders/quad.vert", &fileSize, transientStorage);
+    char* fragShader = read_file("src/assets/shaders/quad.frag", &fileSize, transientStorage);
     
     if(!vertShader || !fragShader)
     {
@@ -137,12 +138,13 @@ bool gl_init(BumpAllocator* transientStorage)
             glGenBuffers(1, &glContext.sTransformSBOID);
             glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, glContext.sTransformSBOID);
             glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(SpriteTransform) * MAX_SPRITE_TRANSFORMS,
-                        renderData.transforms, GL_DYNAMIC_DRAW);
+                        renderData->transforms, GL_DYNAMIC_DRAW);
   
         }
         //Uniforms
         {
             glContext.screenSizeID = glGetUniformLocation(glContext.programID, "screenSize");
+            glContext.orthoProjectionID = glGetUniformLocation(glContext.programID, "orthoProjection");
         }
 
         glEnable(GL_FRAMEBUFFER_SRGB);
@@ -162,18 +164,32 @@ void gl_render()
     glClearColor(119.0f / 255.0f, 33.0f / 255.0f, 111.0f / 255.0f, 1.0f);
     glClearDepth(0.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    glViewport(0,0,input.screenSizeX, input.screenSizeY);
-    Vec2 screenSize = {(float)input.screenSizeX, (float)input.screenSizeY};
+    glViewport(0,0,input->screenSizeX, input->screenSizeX);
+
+    //copy screensize to gpu
+    Vec2 screenSize = {(float)input->screenSizeX, (float)input->screenSizeY};
     glUniform2fv(glContext.screenSizeID, 1, &screenSize.x);
+
+    //orthographic projection 
+    OrthoCamera2D camera = renderData->gameCamera;
+    Mat4 orthoProjection = orthographic_projection(camera.position.x - camera.dimensions.x / 2.0f, 
+                                                    camera.position.x + camera.dimensions.x / 2.0f, 
+                                                    camera.position.y - camera.dimensions.y / 2.0f, 
+                                                    camera.position.y + camera.dimensions.y / 2.0f);
+    // Mat4 orthoProjection = orthographic_projection(-camera.dimensions.x / 2.0f, 
+    //                                                 camera.dimensions.x / 2.0f, 
+    //                                                 -camera.dimensions.y / 2.0f, 
+    //                                                 camera.dimensions.y / 2.0f);
+    glUniformMatrix4fv(glContext.orthoProjectionID, 1, GL_FALSE, &orthoProjection.ax);
 
     {
         //Copy transform to the GPU
-        glBufferSubData(GL_SHADER_STORAGE_BUFFER, 0, sizeof(SpriteTransform) * renderData.sTransformCount,renderData.transforms);
+        glBufferSubData(GL_SHADER_STORAGE_BUFFER, 0, sizeof(SpriteTransform) * renderData->sTransformCount,renderData->transforms);
         
-        glDrawArraysInstanced(GL_TRIANGLES, 0, 6, renderData.sTransformCount);
+        glDrawArraysInstanced(GL_TRIANGLES, 0, 6, renderData->sTransformCount);
 
         //reset for next frame 
-        renderData.sTransformCount = 0;
+        renderData->sTransformCount = 0;
 
     }
 }

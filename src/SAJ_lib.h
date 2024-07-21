@@ -10,13 +10,21 @@
 
 //Timestamp
 #include <sys/stat.h>
+#include <sys/types.h>
+
+
+#include <stdio.h>
+#include <limits.h> // For PATH_MAX
+#include <direct.h>
 //########################################################################
 // DEFINES
 //########################################################################
 #ifdef _WIN32
 #define DEBUG_BREAK() __debugbreak()
+#define EXPORT_FN __declspec(dllexport)
 #elif __linux__
 #define DEBUG_BREAK() _builtin_debugtrap()
+#define EXPORT_FN
 #elif __APPLE__
 #define DEBUG_BREAK() _builtin_trap()
 #endif
@@ -147,11 +155,13 @@ char* bump_alloc(BumpAllocator* BumpAllocator, size_t size)
 // FILE IO
 //########################################################################
 
-long long get_timestamp(char* file)
+long long get_timestamp(const char* file)
 {
-    struct stat file_stat = {};
-    stat(file, &file_stat);
-    return file_stat.st_mtime;
+    struct stat file_stat;
+
+    SAJ_ASSERT(stat(file, &file_stat) != -1, "Failed to get timestamp of file %s" , file);
+         
+    return (long long)file_stat.st_mtime;
 }
 
 bool do_file_exists(char* filePath)
@@ -250,10 +260,10 @@ bool copy_file(char* fileName, char* outputName, char* buffer)
     int fileSize = 0;
     char* data = read_file(fileName, &fileSize, buffer);
     
-    auto file = fopen(outputName, "rb");
+    auto file = fopen(outputName, "wb");
     if(!file)
     {
-        SAJ_ERROR("Failed to open file ! %s", fileName)
+        SAJ_ERROR("Failed to open file ! %s", outputName)
         return false;
     }
 
@@ -278,7 +288,7 @@ bool copy_file(char* fileName, char* outputName, BumpAllocator* bumpAllocator)
     if(fileSize)
     {
         char* buffer = bump_alloc(bumpAllocator, fileSize +1);
-        copy_file(fileName, outputName, buffer);
+        return copy_file(fileName, outputName, buffer);
     }
 
     return true;
@@ -298,3 +308,84 @@ struct IVec2
     int x;
     int y;
 };
+
+struct Vec4
+{
+    union
+    {
+
+        float values[4];
+        struct
+        {
+            float x;
+            float y;
+            float z;
+            float w;
+        };
+        struct
+        {
+            float r;
+            float g;
+            float b;
+            float a;
+        };
+    };
+    float& operator[](int i)
+    {
+        return values[i]; 
+    };
+};
+
+struct Mat4
+{
+     union
+     {
+        Vec4 values[4];
+        struct
+        {
+            float ax;
+            float bx;
+            float cx;
+            float dx;
+            
+            float ay;
+            float by;
+            float cy;
+            float dy;
+            
+            float az;
+            float bz;
+            float cz;
+            float dz;
+            
+            float aw;
+            float bw;
+            float cw;
+            float dw;
+        };
+        
+     };
+
+    Vec4& operator[](int i)
+    {
+        return values[i]; 
+    };
+     
+};
+
+Mat4 orthographic_projection(float left, float right , float top , float bottom)
+{
+    Mat4 result = {};
+    // Scale factors for X and Y axes
+    result[0][0] = 2.0f / (right - left); // Scale X
+    result[1][1] = 2.0f / (top - bottom); // Scale Y
+    // Translation factors to center the view
+    result.aw = -(right + left) / (right - left); // Center X
+    result.bw = -(top + bottom) / (top - bottom); // Center Y
+
+    // Depth settings
+    result[2][2] = -1.0f / (1.0f - 0.0f); // Depth scale factor, note the negation for right-handed coordinate system
+    result[3][3] = 1.0f; // Homogeneous coordinate
+    
+    return result;
+}

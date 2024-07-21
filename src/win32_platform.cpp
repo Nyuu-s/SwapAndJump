@@ -31,8 +31,8 @@ LRESULT CALLBACK windows_window_callback(HWND window, UINT msg, WPARAM wParam, L
     {
         RECT rect = {};
         GetClientRect(W_MAIN_WINDOW_HANDLE, &rect);
-        input.screenSizeX = rect.right - rect.left;
-        input.screenSizeY = rect.bottom - rect.top;
+        input->screenSizeX = rect.right - rect.left;
+        input->screenSizeY = rect.bottom - rect.top;
         break;
     }
     default:
@@ -239,4 +239,29 @@ void* platform_load_gl_function(char* funcName)
     }
 
     return (void*)proc;
+
+
+
+}
+
+bool platform_free_dynamic_lib(void* dll)
+{
+    BOOL result = FreeLibrary((HMODULE) dll);
+    SAJ_ASSERT(result, "Failed to free library")
+    return (bool)result;
+}
+void* platform_load_dynamic_lib(char* dll)
+{
+    HMODULE result = LoadLibraryA(dll);
+    SAJ_ASSERT(result, "Failed to load lib %s", dll)
+
+    return result;
+}
+
+void* platform_load_dynamic_function(void* dll, char* func_name)
+{
+    FARPROC proc = GetProcAddress((HMODULE)dll,func_name);
+    SAJ_ASSERT(proc, "Failed to load functions: %s from DLL", func_name)
+
+    return (void*) proc;
 }

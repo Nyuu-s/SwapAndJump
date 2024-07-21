@@ -8,7 +8,7 @@
             "program": "${workspaceFolder}/JumpAndSwap.exe",
             "args": [],
             "stopAtEntry": false,
-            "cwd": "${fileDirname}",
+            "cwd": "${workspaceFolder}",
             "environment": [],
             "console": "integratedTerminal"
         }
