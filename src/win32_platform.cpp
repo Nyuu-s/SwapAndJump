@@ -31,8 +31,41 @@ LRESULT CALLBACK windows_window_callback(HWND window, UINT msg, WPARAM wParam, L
     {
         RECT rect = {};
         GetClientRect(W_MAIN_WINDOW_HANDLE, &rect);
-        input->screenSizeX = rect.right - rect.left;
-        input->screenSizeY = rect.bottom - rect.top;
+        input->ScreenSize.x = rect.right - rect.left;
+        input->ScreenSize.y = rect.bottom - rect.top;
+        break;
+    }
+    case WM_KEYDOWN:
+    case WM_KEYUP:
+    case WM_SYSKEYDOWN:
+    case WM_SYSKEYUP:
+    {
+        bool isDown = (msg == WM_KEYDOWN) || (msg == WM_SYSKEYDOWN) ;
+        KeyCodeBinding keyCode = KeyCodeLookupTable[wParam];
+        KeyState* key = &input->keys[keyCode];
+        key->isPressed = !key->isPressed &&  !key->isDown && isDown;
+        key->isReleased = !key->isReleased && key->isDown && !isDown;
+        key->isDown = isDown;
+        key->halfTransitionCount++;
+        break;
+    }
+    case WM_LBUTTONDOWN:
+    case WM_RBUTTONDOWN:
+    case WM_MBUTTONDOWN:
+    case WM_LBUTTONUP:
+    case WM_RBUTTONUP:
+    case WM_MBUTTONUP:
+    {
+        bool isDown = (msg == WM_LBUTTONDOWN) || (msg == WM_RBUTTONDOWN) || (msg == WM_MBUTTONDOWN);
+        int mouseCode = (msg == WM_LBUTTONDOWN || msg == WM_LBUTTONUP) ? VK_LBUTTON:
+                        (msg == WM_MBUTTONDOWN || msg == WM_MBUTTONUP) ? VK_MBUTTON: VK_RBUTTON;
+
+        KeyCodeBinding keyCode = KeyCodeLookupTable[mouseCode];
+        KeyState* key = &input->keys[keyCode];
+        key->isPressed = !key->isPressed && !key->isDown && isDown;
+        key->isReleased = !key->isReleased && key->isDown && !isDown;
+        key->isDown = isDown;
+        key->halfTransitionCount++;
         break;
     }
     default:
@@ -206,14 +239,36 @@ bool platform_create_window(int width, int height, char* title)
 
     ShowWindow(W_MAIN_WINDOW_HANDLE, SW_SHOW);
     return true;
-}
+    }
 void update_platform_window()
 {
+    {
+        for (size_t i = 0; i < KEYCODE_COUNT; i++)
+        {
+            input->keys[i].isReleased = false;
+            input->keys[i].isPressed = false;
+            input->keys[i].halfTransitionCount = 0;
+        }
+
+    }
+    
     MSG msg;
     while(PeekMessageA(&msg,W_MAIN_WINDOW_HANDLE, 0,0,PM_REMOVE ))
     {
         TranslateMessage(&msg);
         DispatchMessageA(&msg);
+    }
+
+    {
+        POINT point = {};
+        GetCursorPos(&point);
+        ScreenToClient(W_MAIN_WINDOW_HANDLE, &point);
+        input->prevMousePosition = input->mousePosition;
+        input->mousePosition.x = point.x;
+        input->mousePosition.y = point.y;
+        input->relativeMousePosition = input->mousePosition - input->relativeMousePosition;
+
+        input->mousePositionWorld = screen_to_world(input->mousePosition);
     }
 }
 
@@ -264,4 +319,61 @@ void* platform_load_dynamic_function(void* dll, char* func_name)
     SAJ_ASSERT(proc, "Failed to load functions: %s from DLL", func_name)
 
     return (void*) proc;
+}
+
+void platform_fill_keycode_lookup_table()
+{
+    KeyCodeLookupTable[VK_LBUTTON] = KEY_MOUSE_LEFT;
+    KeyCodeLookupTable[VK_RBUTTON] = KEY_MOUSE_RIGHT;
+    KeyCodeLookupTable[VK_MBUTTON] = KEY_MOUSE_MIDDLE;
+
+    KeyCodeLookupTable['A'] = KEY_A;
+    KeyCodeLookupTable['B'] = KEY_B;
+    KeyCodeLookupTable['C'] = KEY_C;
+    KeyCodeLookupTable['D'] = KEY_D;
+    KeyCodeLookupTable['E'] = KEY_E;
+    KeyCodeLookupTable['F'] = KEY_F;
+    KeyCodeLookupTable['G'] = KEY_G;
+    KeyCodeLookupTable['H'] = KEY_H;
+    KeyCodeLookupTable['I'] = KEY_I;
+    KeyCodeLookupTable['J'] = KEY_J;
+    KeyCodeLookupTable['K'] = KEY_K;
+    KeyCodeLookupTable['L'] = KEY_L;
+    KeyCodeLookupTable['M'] = KEY_M;
+    KeyCodeLookupTable['N'] = KEY_N;
+    KeyCodeLookupTable['O'] = KEY_O;
+    KeyCodeLookupTable['P'] = KEY_P;
+    KeyCodeLookupTable['Q'] = KEY_Q;
+    KeyCodeLookupTable['R'] = KEY_R;
+    KeyCodeLookupTable['S'] = KEY_S;
+    KeyCodeLookupTable['T'] = KEY_T;
+    KeyCodeLookupTable['U'] = KEY_U;
+    KeyCodeLookupTable['V'] = KEY_V;
+    KeyCodeLookupTable['W'] = KEY_W;
+    KeyCodeLookupTable['X'] = KEY_X;
+    KeyCodeLookupTable['Y'] = KEY_Y;
+    KeyCodeLookupTable['Z'] = KEY_Z;
+    KeyCodeLookupTable[VK_SPACE] = KEY_SPACE;
+    KeyCodeLookupTable[VK_TAB] = KEY_TAB;
+    KeyCodeLookupTable[VK_LSHIFT] = KEY_LSHIFT;
+    KeyCodeLookupTable[VK_RSHIFT] = KEY_RSHIFT;
+    KeyCodeLookupTable[VK_DOWN] = KEY_ARROW_DOWN;
+    KeyCodeLookupTable[VK_LEFT] = KEY_ARROW_LEFT;
+    KeyCodeLookupTable[VK_RIGHT] = KEY_ARROW_RIGHT;
+    KeyCodeLookupTable[VK_UP] = KEY_ARROW_UP;
+    KeyCodeLookupTable[VK_MENU] = KEY_ALT;
+    KeyCodeLookupTable[VK_RETURN] = KEY_ENTER;
+
+    KeyCodeLookupTable[VK_NUMPAD0] = KEY_0;
+    KeyCodeLookupTable[VK_NUMPAD1] = KEY_1;
+    KeyCodeLookupTable[VK_NUMPAD2] = KEY_2;
+    KeyCodeLookupTable[VK_NUMPAD3] = KEY_3;
+    KeyCodeLookupTable[VK_NUMPAD4] = KEY_4;
+    KeyCodeLookupTable[VK_NUMPAD5] = KEY_5;
+    KeyCodeLookupTable[VK_NUMPAD6] = KEY_6;
+    KeyCodeLookupTable[VK_NUMPAD7] = KEY_7;
+    KeyCodeLookupTable[VK_NUMPAD8] = KEY_8;
+    KeyCodeLookupTable[VK_NUMPAD9] = KEY_9;
+
+
 }

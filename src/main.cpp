@@ -11,6 +11,7 @@
 
 #include "platform.h"
 
+static KeyCodeBinding KeyCodeLookupTable[KEYCODE_COUNT];
 
 //opengl core
 #include "glcorearb.h"
@@ -60,9 +61,8 @@ int main()
         SAJ_ERROR("Failed to allocate gameState");
         return -1;
     }
-    input->screenSizeX = 1280;
-    input->screenSizeY = 720;
-    platform_create_window(input->screenSizeX,input->screenSizeY, "hello world");
+    platform_fill_keycode_lookup_table();
+    platform_create_window(1280, 720, "hello world");
 
     gl_init(&transientStorage);
     while (running)

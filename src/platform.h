@@ -17,3 +17,4 @@ void platform_swap_buffers();
 bool platform_free_dynamic_lib(void*);
 void* platform_load_dynamic_lib(char*);
 void* platform_load_dynamic_function(void*, char*);
+void platform_fill_keycode_lookup_table();

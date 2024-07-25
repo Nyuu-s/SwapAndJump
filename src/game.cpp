@@ -20,7 +20,23 @@ EXPORT_FN void update_game(GameState* gameStateIn, RenderData* data, Input* inpu
         // renderData->gameCamera.position.x = 160;
         // renderData->gameCamera.position.y = 90;
    
-    draw_sprite(SPRITE_DICE, {0.0f, .0f}, {16.0f, 16.0f});
+    draw_sprite(SPRITE_DICE, gameState->playerPos);
 
+    if(key_is_down(KEY_Q))
+    {
+        gameState->playerPos.x -= 1;
+    }
+    if(key_is_down(KEY_Z))
+    {
+        gameState->playerPos.y -= 1;
+    }
+       if(key_is_down(KEY_S))
+    {
+        gameState->playerPos.y += 1;
+    }
+       if(key_is_down(KEY_D))
+    {
+        gameState->playerPos.x += 1;
+    }
     
 }

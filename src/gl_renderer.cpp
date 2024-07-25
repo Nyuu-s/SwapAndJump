@@ -164,10 +164,10 @@ void gl_render()
     glClearColor(119.0f / 255.0f, 33.0f / 255.0f, 111.0f / 255.0f, 1.0f);
     glClearDepth(0.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    glViewport(0,0,input->screenSizeX, input->screenSizeY);
+    glViewport(0,0,input->ScreenSize.x, input->ScreenSize.y);
 
     //copy screensize to gpu
-    Vec2 screenSize = {(float)input->screenSizeX, (float)input->screenSizeY};
+    Vec2 screenSize = {(float)input->ScreenSize.x, (float)input->ScreenSize.y};
     glUniform2fv(glContext.screenSizeID, 1, &screenSize.x);
 
     //orthographic projection 

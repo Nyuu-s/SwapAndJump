@@ -29,6 +29,7 @@
 #define DEBUG_BREAK() _builtin_trap()
 #endif
 
+#define b8 char
 #define SHIFT_IN_BIT(x) 1 << (x)
 #define KB(x) ((unsigned long long)1024 * x)
 #define MB(x) ((unsigned long long)1024 * KB(x))
@@ -297,6 +298,19 @@ bool copy_file(char* fileName, char* outputName, BumpAllocator* bumpAllocator)
 // MATHS
 //########################################################################
 
+typedef struct 
+{
+    size_t max;
+    size_t count;
+    KeyCodeBinding elements[];
+} ArrayKey;
+
+
+bool is_array_full(void* arr)
+{
+    int size = sizeof(arr) / sizeof(&arr);
+}
+
 struct Vec2
 {
     float x;
@@ -307,8 +321,15 @@ struct IVec2
 {
     int x;
     int y;
+    IVec2 operator-(IVec2 other)
+    {
+        return {x - other.x, y - other.y};
+    }
 };
-
+Vec2 vec_2(IVec2 v)
+{
+    return Vec2{(float)v.x, (float)v.y};
+}
 struct Vec4
 {
     union
@@ -389,3 +410,4 @@ Mat4 orthographic_projection(float left, float right , float top , float bottom)
     
     return result;
 }
+
