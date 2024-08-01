@@ -3,7 +3,6 @@
 #include "assets.h"
 #include "SAJ_lib.h"
 
-constexpr int MAX_SPRITE_TRANSFORMS = 1000;
 
 struct OrthoCamera2D
 {
@@ -25,8 +24,9 @@ struct RenderData
     OrthoCamera2D gameCamera;
     OrthoCamera2D uiCamera;
 
-    int sTransformCount;
-    SpriteTransform transforms[MAX_SPRITE_TRANSFORMS];
+    
+    ArrayDef(SpriteTransform, 1000) transforms;
+    
 };
 
 
@@ -35,25 +35,37 @@ static RenderData* renderData;
 IVec2 screen_to_world(IVec2 screenPos)
 {
     OrthoCamera2D camera = renderData->gameCamera;
-    int xPos = (float)screenPos.x / input->ScreenSize.x * camera.dimensions.x;
+
+    int xPos = (float)screenPos.x / (float)input->ScreenSize.x * camera.dimensions.x;
     xPos += -camera.dimensions.x / 2.0f + camera.position.x;
 
-    int yPos = (float)screenPos.y / input->ScreenSize.y * camera.position.y;
+    int yPos = (float)screenPos.y / (float)input->ScreenSize.y * camera.position.y;
     yPos += camera.dimensions.y / 2.0f + camera.position.y;
 
     return {xPos, yPos};
 }
 
+void draw_quad(Vec2 pos, Vec2 size)
+{
+    SpriteTransform transform = {};
+    Vec2 fpos = pos - size  / 2.0f;  
+    transform.pos =  {(int)fpos.x, (int)fpos.y};
+    transform.size = {(int)size.x, (int) size.y};
+    transform.spriteOffset = {0, 0};
+    transform.spriteSize = {1, 1}; // index to white
+
+    renderData->transforms.add(transform);
+}
 void draw_sprite(SpriteID spriteID, Vec2 pos)
 {
     Sprite sprite = get_sprite(spriteID);
 
     SpriteTransform sTransform = {};
-    sTransform.pos = {(int)pos.x, (int)pos.y};
+    sTransform.pos = IVec2{(int)pos.x, (int)pos.y} - sprite.spriteOffset / 2.0f;
     sTransform.spriteOffset = sprite.spriteOffset;
     sTransform.spriteSize = sprite.spriteSize;
     sTransform.size = sprite.spriteSize;
-    renderData->transforms[renderData->sTransformCount++] = sTransform;
+    renderData->transforms.add(sTransform);
 }
 
 void draw_sprite(SpriteID spriteID, IVec2 pos)

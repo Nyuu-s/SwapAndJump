@@ -6,6 +6,7 @@
 
 enum KeyCodeBinding
 {
+    KEy_DEFAULT,
     KEY_MOUSE_LEFT,
     KEY_MOUSE_RIGHT,
     KEY_MOUSE_MIDDLE,

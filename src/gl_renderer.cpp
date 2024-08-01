@@ -3,7 +3,7 @@
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
 
-#include "gl_render_interface.h"
+
 
 //########################################################################
 // OpenGL constants
@@ -137,8 +137,8 @@ bool gl_init(BumpAllocator* transientStorage)
               
             glGenBuffers(1, &glContext.sTransformSBOID);
             glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, glContext.sTransformSBOID);
-            glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(SpriteTransform) * MAX_SPRITE_TRANSFORMS,
-                        renderData->transforms, GL_DYNAMIC_DRAW);
+            glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(SpriteTransform) * renderData->transforms.maxCount,
+                        renderData->transforms.elements, GL_DYNAMIC_DRAW);
   
         }
         //Uniforms
@@ -176,20 +176,17 @@ void gl_render()
                                                     camera.position.x + camera.dimensions.x / 2.0f, 
                                                     camera.position.y - camera.dimensions.y / 2.0f, 
                                                     camera.position.y + camera.dimensions.y / 2.0f);
-    // Mat4 orthoProjection = orthographic_projection(-camera.dimensions.x / 2.0f, 
-    //                                                 camera.dimensions.x / 2.0f, 
-    //                                                 -camera.dimensions.y / 2.0f, 
-    //                                                 camera.dimensions.y / 2.0f);
+  
     glUniformMatrix4fv(glContext.orthoProjectionID, 1, GL_FALSE, &orthoProjection.ax);
 
     {
         //Copy transform to the GPU
-        glBufferSubData(GL_SHADER_STORAGE_BUFFER, 0, sizeof(SpriteTransform) * renderData->sTransformCount,renderData->transforms);
+        glBufferSubData(GL_SHADER_STORAGE_BUFFER, 0, sizeof(SpriteTransform) * renderData->transforms.count,renderData->transforms.elements);
         
-        glDrawArraysInstanced(GL_TRIANGLES, 0, 6, renderData->sTransformCount);
+        glDrawArraysInstanced(GL_TRIANGLES, 0, 6, renderData->transforms.count);
 
         //reset for next frame 
-        renderData->sTransformCount = 0;
+        renderData->transforms.clear();
 
     }
 }

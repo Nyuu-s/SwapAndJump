@@ -34,6 +34,25 @@
 #define KB(x) ((unsigned long long)1024 * x)
 #define MB(x) ((unsigned long long)1024 * KB(x))
 #define GB(x) ((unsigned long long)1024 * MB(x))
+#define ArrayDef(type, size) struct Array##type \
+{\
+    int count = 0;\
+    int maxCount = 1000;\
+    type elements[size];\
+    int add(type element)\
+    {\
+        elements[count] = element;\
+        return count++;\
+    }\
+    bool is_full()\
+    {\
+        return count == maxCount;\
+    }\
+    void clear()\
+    {\
+        count = 0;\
+    }\
+}
 
 //########################################################################
 // LOGGING
@@ -298,23 +317,18 @@ bool copy_file(char* fileName, char* outputName, BumpAllocator* bumpAllocator)
 // MATHS
 //########################################################################
 
-typedef struct 
-{
-    size_t max;
-    size_t count;
-    KeyCodeBinding elements[];
-} ArrayKey;
-
-
-bool is_array_full(void* arr)
-{
-    int size = sizeof(arr) / sizeof(&arr);
-}
-
 struct Vec2
 {
     float x;
     float y;
+    Vec2 operator-(Vec2 other)
+    {
+        return {x - other.x, y - other.y};
+    }
+    Vec2 operator/(float other)
+    {
+        return {x / other, y / other};
+    }
 };
 
 struct IVec2
@@ -324,6 +338,11 @@ struct IVec2
     IVec2 operator-(IVec2 other)
     {
         return {x - other.x, y - other.y};
+    }
+
+    IVec2 operator/(float other)
+    {
+        return {(int) (x / other),(int) (y / other)};
     }
 };
 Vec2 vec_2(IVec2 v)
@@ -402,7 +421,7 @@ Mat4 orthographic_projection(float left, float right , float top , float bottom)
     result[1][1] = 2.0f / (top - bottom); // Scale Y
     // Translation factors to center the view
     result.aw = -(right + left) / (right - left); // Center X
-    result.bw = -(top + bottom) / (top - bottom); // Center Y
+    result.bw = (top + bottom) / (top - bottom); // Center Y
 
     // Depth settings
     result[2][2] = -1.0f / (1.0f - 0.0f); // Depth scale factor, note the negation for right-handed coordinate system

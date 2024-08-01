@@ -19,7 +19,7 @@ static KeyCodeBinding KeyCodeLookupTable[KEYCODE_COUNT];
 #ifdef _WIN32
 #include "win32_platform.cpp"
 #endif
-
+#include "gl_render_interface.h"
 #include "gl_renderer.cpp"
 
 
@@ -56,11 +56,15 @@ int main()
         SAJ_ERROR("Failed to allocate RenderData");
         return -1;
     }
+    //somehow not initialize correctly in macro
+    renderData->transforms.maxCount = 1000;
     if(!gameState)
     {
         SAJ_ERROR("Failed to allocate gameState");
         return -1;
     }
+    //somehow not initialize correctly in macro
+    gameState->keyMappings->keys.maxCount = 3;
     platform_fill_keycode_lookup_table();
     platform_create_window(1280, 720, "hello world");
 
