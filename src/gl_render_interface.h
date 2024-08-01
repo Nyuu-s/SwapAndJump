@@ -39,8 +39,8 @@ IVec2 screen_to_world(IVec2 screenPos)
     int xPos = (float)screenPos.x / (float)input->ScreenSize.x * camera.dimensions.x;
     xPos += -camera.dimensions.x / 2.0f + camera.position.x;
 
-    int yPos = (float)screenPos.y / (float)input->ScreenSize.y * camera.position.y;
-    yPos += camera.dimensions.y / 2.0f + camera.position.y;
+    int yPos = (float)screenPos.y / (float)input->ScreenSize.y * camera.dimensions.y;
+    yPos -= camera.dimensions.y / 2.0f + camera.position.y;
 
     return {xPos, yPos};
 }
