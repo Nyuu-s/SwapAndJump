@@ -375,7 +375,61 @@ struct Vec4
         return values[i]; 
     };
 };
+struct Vec3
+{
+    union
+    {
 
+        float values[3];
+        struct
+        {
+            float x;
+            float y;
+            float z;
+        };
+        struct
+        {
+            float r;
+            float g;
+            float b;
+        };
+    };
+    float& operator[](int i)
+    {
+        return values[i]; 
+    };
+};
+struct Mat3
+{
+     union
+     {
+        Vec3 values[3];
+        struct
+        {
+            float ax;
+            float bx;
+            float cx;
+      
+            
+            float ay;
+            float by;
+            float cy;
+
+            
+            float az;
+            float bz;
+            float cz;
+    
+        };
+        
+     };
+
+    Vec3& operator[](int i)
+    {
+        return values[i]; 
+    };
+     
+};
 struct Mat4
 {
      union

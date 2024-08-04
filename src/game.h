@@ -9,6 +9,16 @@ constexpr int WORLD_WIDTH = 320;
 constexpr int WORLD_HEIGHT = 180;
 constexpr int TILESIZE = 8;
 constexpr IVec2 WORLD_GRID = {WORLD_WIDTH/TILESIZE,WORLD_HEIGHT/TILESIZE};
+// constexpr Mat3 TileBitMaskKernel = {
+//     1, 2, 4,
+//     8, 0, 16,
+//     32, 64, 128
+// };
+constexpr Mat3 TileBitMaskKernel = {
+    0, 1, 0,
+    2, 0, 4,
+    0, 8, 0
+};
 
 enum GameInputType
 {

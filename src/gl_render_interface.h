@@ -44,7 +44,10 @@ IVec2 screen_to_world(IVec2 screenPos)
 
     return {xPos, yPos};
 }
-
+void draw_quad(SpriteTransform transform)
+{
+    renderData->transforms.add(transform);
+}
 void draw_quad(Vec2 pos, Vec2 size)
 {
     SpriteTransform transform = {};

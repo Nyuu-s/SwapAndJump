@@ -2,13 +2,14 @@
 
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
+#include "gl_render_interface.h"
 
 
 
 //########################################################################
 // OpenGL constants
 //########################################################################
-const char* TEXTURE_PATH = "src/assets/textures/TEXTURE_SKY.png";
+const char* TEXTURE_PATH = "src/assets/textures/T_SPRITESET.png";
 
 
 //########################################################################
