@@ -41,9 +41,18 @@ int get_bitmask_index(int x, int y)
     bool bottom_right = 1;
 
         
+    // Neighbouring Tiles        Top    Left      Right       Bottom  
+    int neighbourOffsets[24] = { 0,-1,  -1, 0,     1, 0,       0, 1,   
+    //                          Topleft Topright Bottomleft Bottomright
+                                -1,-1,   1,-1,    -1, 1,       1, 1,
+    //                           Top2   Left2     Right2      Bottom2
+                                 0,-2,  -2, 0,     2, 0,       0, 2};
 
-
-
+    Tile* left_tile = get_tile(x-1, y);
+    if(left_tile)
+    {
+        left = left_tile->isVisible;
+    }
 
     Tile* right_tile = get_tile(x+1, y);
     if(right_tile)
@@ -76,27 +85,35 @@ int get_bitmask_index(int x, int y)
     + TileBitMaskKernel.bz * bottom;
 
 
-    unsigned char flags = 0xFF;
-
-    
-    for (int i = -1; i < 2; i++)
+    unsigned char cardinalflags = 0;
+    unsigned char diagflags = 0;
+    int neighbourCount = 0;
+    int slot = 0;
+    for(int n = 0; n < 8; n++)
     {
-        for (int j = -1; j < 2 ; j++)
+   
+        Tile* neighbour  = get_tile(x + neighbourOffsets[n * 2], y + neighbourOffsets[n * 2 + 1]);
+        if(!neighbour || neighbour->isVisible)
         {
-           
-            Tile* neighbour  = get_tile(x+j, y+i);
-            if(neighbour)
-            {
-               flags = flags << 1;
-               flags |= neighbour->isVisible;
-               
-            }
+            cardinalflags |= 1 << n;  
+            neighbourCount++;
         }
-        
+        else
+        {
+            slot = n;
+        }
     }
-    flags = flags & ~16;
 
-    return cardinal;
+    if (cardinalflags == 255)
+    {
+        return 20;
+    }
+    if(neighbourCount == 7 && slot >= 4 )
+    {
+        return 16 + (slot - 4);
+    }
+
+    return cardinalflags & 0xF;
 }
 //########################################################################
 // Exposed Game Functions
@@ -174,6 +191,7 @@ EXPORT_FN void update_game(GameState* gameStateIn, RenderData* data, Input* inpu
         }
     }
 
+    IVec2 initialSpriteOffset = {7*16, 0};
     for (size_t i = 0; i < WORLD_GRID.y; i++)
     {
      for (size_t j = 0; j < WORLD_GRID.x; j++)
@@ -184,16 +202,16 @@ EXPORT_FN void update_game(GameState* gameStateIn, RenderData* data, Input* inpu
             continue;
         }
 
-        Vec2 tilepos = {j * (float)TILESIZE + (float)TILESIZE/2.0f, i * (float)TILESIZE + (float)TILESIZE/2.0f};
+        
+        int index =  get_bitmask_index(j, i);
+
         SpriteTransform transform = {};
-        Vec2 fpos =  tilepos - Vec2{TILESIZE, TILESIZE} / 2.0;
+        Vec2 fpos =   Vec2{j * (float)TILESIZE + (float)TILESIZE/2.0f, i * (float)TILESIZE + (float)TILESIZE/2.0f} - Vec2{TILESIZE, TILESIZE} / 2.0;
         transform.pos = {(int) fpos.x, (int)fpos.y};
         transform.size = {TILESIZE, TILESIZE};
         transform.spriteSize = {TILESIZE, TILESIZE};
-        int index =  get_bitmask_index(j, i);
-
-        transform.spriteOffset = {7*16 + (index % 4) * TILESIZE, (index/4) * TILESIZE};
-    
+        transform.spriteOffset = {initialSpriteOffset.x + (index % 4) * TILESIZE, initialSpriteOffset.y + (index/4) * TILESIZE};
+     
         draw_quad(transform);
      }
      
