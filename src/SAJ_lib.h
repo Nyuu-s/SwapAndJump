@@ -467,6 +467,11 @@ struct Mat4
      
 };
 
+long long max_LL(long long a, long long b)
+{
+    return (a > b) ? a : b;
+}
+
 Mat4 orthographic_projection(float left, float right , float top , float bottom)
 {
     Mat4 result = {};

@@ -1,10 +1,10 @@
+#define WIN32_LEAN_AND_MEAN
+#define NOMINMAX
 #include "platform.h"
 #include "SAJ_lib.h"
 //########################################################################
 // WINDOWS PLATFORM
 //########################################################################
-#define WIN32_LEAN_AND_MEAN
-#define NOMINMAX
 #include <Windows.h>
 
 #include "wglext.h"

@@ -74,7 +74,7 @@ int main()
         reload_game_dll(&transientStorage);
         update_platform_window();
         update_game(gameState, renderData, input);
-        gl_render();
+        gl_render(&transientStorage);
         platform_swap_buffers();
 
         transientStorage.used = 0;
