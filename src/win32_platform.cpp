@@ -14,7 +14,7 @@
 static const char* W_MAIN_WINDOW_CLASS_NAME = "WMainWindow";
 static HWND W_MAIN_WINDOW_HANDLE;
 static HDC W_DEVICE_CONTEXT_HANDLE;
-
+static PFNWGLSWAPINTERVALEXTPROC wglSwapIntervalEXT_ptr;
 //########################################################################
 // PLATFORM IMPLEMENTATIONS
 //########################################################################
@@ -150,6 +150,7 @@ bool platform_create_window(int width, int height, char* title)
         //set function for the real window
         wglChoosePixelFormatARB = (PFNWGLCHOOSEPIXELFORMATARBPROC) platform_load_gl_function("wglChoosePixelFormatARB");
         wglCreateContextAttribs = (PFNWGLCREATECONTEXTATTRIBSARBPROC) platform_load_gl_function("wglCreateContextAttribsARB");
+        wglSwapIntervalEXT_ptr = (PFNWGLSWAPINTERVALEXTPROC) platform_load_gl_function("wglSwapIntervalEXT");
 
         if(!wglCreateContextAttribs || !wglChoosePixelFormatARB)
         {
@@ -242,15 +243,7 @@ bool platform_create_window(int width, int height, char* title)
     }
 void update_platform_window()
 {
-    {
-        for (size_t i = 0; i < KEYCODE_COUNT; i++)
-        {
-            input->keys[i].isReleased = false;
-            input->keys[i].isPressed = false;
-            input->keys[i].halfTransitionCount = 0;
-        }
 
-    }
     MSG msg;
     
     while(PeekMessageA(&msg,W_MAIN_WINDOW_HANDLE, 0,0,PM_REMOVE ))
@@ -264,12 +257,10 @@ void update_platform_window()
         POINT point = {};
         GetCursorPos(&point);
         ScreenToClient(W_MAIN_WINDOW_HANDLE, &point);
-        input->prevMousePosition = input->mousePosition;
 
         input->mousePosition.x = point.x;
         input->mousePosition.y = point.y;
 
-        input->relativeMousePosition = input->mousePosition - input->prevMousePosition;
         input->mousePositionWorld = screen_to_world(input->mousePosition);
     }
 }
@@ -277,6 +268,11 @@ void update_platform_window()
 void platform_swap_buffers()
 {
    SwapBuffers(W_DEVICE_CONTEXT_HANDLE); 
+}
+
+void  platform_set_vsync(bool isVsync)
+{
+    wglSwapIntervalEXT_ptr(isVsync);
 }
 
 void* platform_load_gl_function(char* funcName)

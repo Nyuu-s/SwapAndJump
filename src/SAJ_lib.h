@@ -16,6 +16,7 @@
 #include <stdio.h>
 #include <limits.h> // For PATH_MAX
 #include <direct.h>
+#include <math.h>
 //########################################################################
 // DEFINES
 //########################################################################
@@ -399,37 +400,7 @@ struct Vec3
         return values[i]; 
     };
 };
-struct Mat3
-{
-     union
-     {
-        Vec3 values[3];
-        struct
-        {
-            float ax;
-            float bx;
-            float cx;
-      
-            
-            float ay;
-            float by;
-            float cy;
 
-            
-            float az;
-            float bz;
-            float cz;
-    
-        };
-        
-     };
-
-    Vec3& operator[](int i)
-    {
-        return values[i]; 
-    };
-     
-};
 struct Mat4
 {
      union
@@ -466,6 +437,32 @@ struct Mat4
     };
      
 };
+
+float lerp(float a, float b, float dt)
+{
+    // dt = 0 : a + (b-a) * 0 = a
+    // dt = 1 : a + (b-a) * 1 = 
+    //          a + b - a = b
+
+    return a + (b-a)  * dt;
+}
+
+Vec2 lerp(Vec2 prev, Vec2 curr, double dt)
+{
+    Vec2 res;
+    res.x = lerp(prev.x, curr.x, dt);
+    res.y = lerp(prev.y, curr.y, dt);
+    return res;
+}
+
+
+IVec2 lerp(IVec2 prev, IVec2 curr, double dt)
+{
+    IVec2 res;
+    res.x = (int)floorf(lerp((float)prev.x, (float) curr.x, dt));
+    res.y = (int)floorf(lerp((float)prev.y, (float) curr.y, dt));
+    return res;
+}
 
 long long max_LL(long long a, long long b)
 {

@@ -9,16 +9,9 @@ constexpr int WORLD_WIDTH = 320;
 constexpr int WORLD_HEIGHT = 180;
 constexpr int TILESIZE = 8;
 constexpr IVec2 WORLD_GRID = {WORLD_WIDTH/TILESIZE,WORLD_HEIGHT/TILESIZE};
-// constexpr Mat3 TileBitMaskKernel = {
-//     1, 2, 4,
-//     8, 0, 16,
-//     32, 64, 128
-// };
-constexpr Mat3 TileBitMaskKernel = {
-    0, 1, 0,
-    2, 0, 4,
-    0, 8, 0
-};
+constexpr int UPDATE_PER_SEC = 60;
+constexpr double UPDATE_DELAY = 1.0 / UPDATE_PER_SEC;
+
 
 enum GameInputType
 {
@@ -47,11 +40,19 @@ struct KeyMapping
   ArrayDef(KeyCodeBinding, 3) keys;  
 };
 
+struct Player 
+{
+    IVec2 pos;
+    IVec2 prevPos;
+};
 
 struct GameState
 {
     bool initialized = false;
-    IVec2 playerPos;
+    double dtAccumulator = 0.0;
+
+    Player player;
+
     KeyMapping keyMappings[GAME_INPUT_COUNT];
     Tile worldGrid[WORLD_GRID.x][WORLD_GRID.y];
 };
@@ -79,5 +80,5 @@ Tile* get_tile(IVec2 worldPos)
 //########################################################################
 extern "C"
 {
-    EXPORT_FN void update_game(GameState* gameStateIn, RenderData* data, Input* inputIn);
+    EXPORT_FN void update_game(GameState* gameStateIn, RenderData* data, Input* inputIn, double deltatime);
 };

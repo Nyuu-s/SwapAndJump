@@ -22,7 +22,9 @@ static KeyCodeBinding KeyCodeLookupTable[KEYCODE_COUNT];
 #include "gl_render_interface.h"
 #include "gl_renderer.cpp"
 
-
+//TODO training replace by own header
+#include <chrono>
+double get_delta_time();
 
 //########################################################################
 // Game DLL
@@ -37,6 +39,9 @@ void reload_game_dll(BumpAllocator* transientStorage);
 
 int main()
 {
+    //init delta time static var
+    get_delta_time();
+
     BumpAllocator transientStorage = make_bump_allocator(MB(50));
     BumpAllocator persistentStorage = make_bump_allocator(MB(15));
 
@@ -66,14 +71,18 @@ int main()
     //somehow not initialize correctly in macro
     gameState->keyMappings->keys.maxCount = 3;
     platform_fill_keycode_lookup_table();
-    platform_create_window(1280, 720, "hello world");
+    platform_create_window(1280, 720, "Swap & Jump");
+    platform_set_vsync(true);
 
     gl_init(&transientStorage);
     while (running)
     {
+        double dt = get_delta_time();
+
         reload_game_dll(&transientStorage);
+
         update_platform_window();
-        update_game(gameState, renderData, input);
+        update_game(gameState, renderData, input, dt);
         gl_render(&transientStorage);
         platform_swap_buffers();
 
@@ -82,11 +91,24 @@ int main()
     return 0;
 }
 
-void update_game(GameState* gameStateIn, RenderData* data, Input* inputIn)
+void update_game(GameState* gameStateIn, RenderData* data, Input* inputIn, double deltatime)
 {
-    update_game_ptr(gameStateIn, data, inputIn);
+    update_game_ptr(gameStateIn, data, inputIn, deltatime);
 }
 
+double get_delta_time()
+{
+    //Static (here): Only executed once, life duration is program duration
+    static auto lastTime = std::chrono::steady_clock::now();
+
+    auto currentTime = std::chrono::steady_clock::now();
+
+    //in seconds
+    double delta = std::chrono::duration<double>(currentTime - lastTime).count();
+    lastTime = currentTime;
+
+    return delta;
+}
 void reload_game_dll(BumpAllocator* transientStorage)
 {
     static void* gameDLL;
@@ -117,3 +139,4 @@ void reload_game_dll(BumpAllocator* transientStorage)
         last_edit_timestamp_gamedll = current_timestamp_gamedll;
     }
 }
+
