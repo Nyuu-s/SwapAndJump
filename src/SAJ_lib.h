@@ -444,10 +444,10 @@ float lerp(float a, float b, float dt)
     // dt = 1 : a + (b-a) * 1 = 
     //          a + b - a = b
 
-    return a + (b-a)  * dt;
+    return a + (b-a) * dt;
 }
 
-Vec2 lerp(Vec2 prev, Vec2 curr, double dt)
+Vec2 lerp(Vec2 prev, Vec2 curr, float dt)
 {
     Vec2 res;
     res.x = lerp(prev.x, curr.x, dt);
@@ -456,7 +456,7 @@ Vec2 lerp(Vec2 prev, Vec2 curr, double dt)
 }
 
 
-IVec2 lerp(IVec2 prev, IVec2 curr, double dt)
+IVec2 lerp(IVec2 prev, IVec2 curr, float dt)
 {
     IVec2 res;
     res.x = (int)floorf(lerp((float)prev.x, (float) curr.x, dt));
@@ -484,5 +484,7 @@ Mat4 orthographic_projection(float left, float right , float top , float bottom)
     result[3][3] = 1.0f; // Homogeneous coordinate
     
     return result;
+
+
 }
 

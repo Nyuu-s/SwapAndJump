@@ -40,9 +40,11 @@ IVec2 screen_to_world(IVec2 screenPos)
     xPos += -camera.dimensions.x / 2.0f + camera.position.x;
 
     int yPos = (float)screenPos.y / (float)input->ScreenSize.y * camera.dimensions.y;
-    yPos -= camera.dimensions.y / 2.0f + camera.position.y;
+    yPos += camera.dimensions.y / 2.0f + camera.position.y;
 
     return {xPos, yPos};
+
+    
 }
 void draw_quad(SpriteTransform transform)
 {

@@ -6,6 +6,9 @@ enum SpriteID
 {
     SPRITE_DICE,
     SPRITE_WHITE,
+    SPRITE_CHARACHTER,
+
+
 
     SPRITE_COUNT
 };
@@ -31,6 +34,12 @@ Sprite get_sprite(SpriteID SpriteID)
         {
             sprite.spriteOffset = {0, 0};
             sprite.spriteSize = {1, 1};
+            break;
+        }
+        case SPRITE_CHARACHTER:
+        {
+            sprite.spriteOffset = {176, 0};
+            sprite.spriteSize = {17, 20};
             break;
         }
     }

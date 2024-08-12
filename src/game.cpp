@@ -153,7 +153,10 @@ EXPORT_FN void update_game(GameState* gameStateIn, RenderData* data, Input* inpu
         renderData->gameCamera.dimensions = {WORLD_WIDTH, WORLD_HEIGHT};
         renderData->gameCamera.position.x = 160;
         renderData->gameCamera.position.y = -90;
-
+        gameState->player.pos = IVec2{
+            160 + 40 ,
+            90 + 20 
+            };
      
         {
             gameState->keyMappings[MOVE_UP].keys.add(KEY_Z);
@@ -206,8 +209,7 @@ EXPORT_FN void update_game(GameState* gameStateIn, RenderData* data, Input* inpu
 
     {
         Player& player = gameState->player;
-        IVec2 playerPos = lerp(player.prevPos, player.pos, interpolatedDT);
-        draw_sprite(SPRITE_DICE, playerPos);
+        draw_sprite(SPRITE_CHARACHTER, lerp(player.prevPos, player.pos, (float)interpolatedDT));
       
     }
 
@@ -219,6 +221,11 @@ EXPORT_FN void update_game(GameState* gameStateIn, RenderData* data, Input* inpu
      for (size_t j = 0; j < WORLD_GRID.x; j++)
      {
         Tile* tile = get_tile(j, i);
+        if(j == WORLD_GRID.x/2 && i == WORLD_GRID.y / 2)
+        {
+            tile->isVisible = true;
+            tile->neighbourMask = 20;
+        }
         if(!tile->isVisible)
         {
             continue;
