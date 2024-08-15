@@ -66,7 +66,7 @@ void draw_sprite(SpriteID spriteID, Vec2 pos)
     Sprite sprite = get_sprite(spriteID);
 
     SpriteTransform sTransform = {};
-    sTransform.pos = IVec2{(int)pos.x, (int)pos.y} - sprite.spriteOffset / 2.0f;
+    sTransform.pos = IVec2{(int)pos.x, (int)pos.y} - sprite.spriteSize / 2.0f;
     sTransform.spriteOffset = sprite.spriteOffset;
     sTransform.spriteSize = sprite.spriteSize;
     sTransform.size = sprite.spriteSize;

@@ -469,22 +469,96 @@ long long max_LL(long long a, long long b)
     return (a > b) ? a : b;
 }
 
+float max_f(float a, float b)
+{
+    return (a > b) ? a : b;
+}
+
+float min_f(float a, float b)
+{
+    return (a < b) ? a : b;
+}
+
+float approach(float current, float target, float increase)
+{
+    if(current < target)
+    {
+        return min_f(current + increase, target);
+    }
+    return max_f(current - increase, target);
+}
+int sign(int x)
+{
+    return (x >= 0) ? 1 : -1;
+}
+
+float sign(float x)
+{
+    return (x >= 0.0f) ? 1.0f : -1.0f;
+}
+
 Mat4 orthographic_projection(float left, float right , float top , float bottom)
 {
-    Mat4 result = {};
-    // Scale factors for X and Y axes
-    result[0][0] = 2.0f / (right - left); // Scale X
-    result[1][1] = 2.0f / (top - bottom); // Scale Y
-    // Translation factors to center the view
-    result.aw = -(right + left) / (right - left); // Center X
-    result.bw = (top + bottom) / (top - bottom); // Center Y
+    // Mat4 result = {};
+    // // Scale factors for X and Y axes
+    // result[0][0] = 2.0f / (right - left); // Scale X
+    // result[1][1] = 2.0f / (top - bottom); // Scale Y
+    // // Translation factors to center the view
+    // result.aw = -(right + left) / (right - left); // Center X
+    // result.bw = (top + bottom) / (top - bottom); // Center Y
 
-    // Depth settings
-    result[2][2] = -1.0f / (1.0f - 0.0f); // Depth scale factor, note the negation for right-handed coordinate system
-    result[3][3] = 1.0f; // Homogeneous coordinate
+    // // Depth settings
+    // result[2][2] = -1.0f / (1.0f - 0.0f); // Depth scale factor, note the negation for right-handed coordinate system
+    // result[3][3] = 1.0f; // Homogeneous coordinate
     
-    return result;
+    // return result;
+    Mat4 result = {};
+    result.aw = -(right + left) / (right - left);
+    result.bw = (top + bottom) / (top - bottom);
+    result.cw = 0.0f; // Near Plane
+    result[0][0] = 2.0f / (right - left);
+    result[1][1] = 2.0f / (top - bottom); 
+    result[2][2] = 1.0f / (1.0f - 0.0f); // Far and Near
+    result[3][3] = 1.0f;
 
+    return result;
 
 }
 
+struct IRect {
+    IVec2 pos;
+    IVec2 size;
+};
+struct Rect {
+    Vec2 pos;
+    Vec2 size;
+};
+
+bool point_in_rect(Vec2 point, Rect rect)
+{
+    return( point.x >= rect.pos.x && 
+            point.x <= rect.pos.x + rect.size.x &&
+            point.y >= rect.pos.y && 
+            point.y <= rect.pos.y + rect.size.y);
+}
+
+
+bool point_in_rect(IVec2 point, IRect rect)
+{
+    return( point.x >= rect.pos.x && 
+            point.x <= rect.pos.x + rect.size.x &&
+            point.y >= rect.pos.y && 
+            point.y <= rect.pos.y + rect.size.y);
+}
+
+bool rect_collision(IRect a, IRect b)
+{
+    return(
+        a.pos.x < b.pos.x + b.size.x &&  // left A with right B
+        a.pos.x + a.size.x > b.pos.x &&  // Right A with left B
+        a.pos.y < b.pos.y + b.size.y &&  // Bottom A with up B
+        a.pos.y + a.size.y > b.pos.y     // Up A with bottom B 
+    );
+}
+
+ 

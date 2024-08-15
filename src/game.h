@@ -44,6 +44,7 @@ struct Player
 {
     IVec2 pos;
     IVec2 prevPos;
+    Vec2 speed;
 };
 
 struct GameState
@@ -60,21 +61,7 @@ struct GameState
 static GameState* gameState;
 
 
-Tile* get_tile(int x, int y)
-{
-    Tile* tile = nullptr;
-    if(x >= 0 && x<WORLD_GRID.x && y >=0 && y < WORLD_GRID.y)
-    {
-        tile = &gameState->worldGrid[x][y];
-    }
 
-    return tile;
-}
-
-Tile* get_tile(IVec2 worldPos)
-{
-    return get_tile(worldPos.x / TILESIZE, worldPos.y / TILESIZE);
-}
 //########################################################################
 // Game Functions (exposed)
 //########################################################################

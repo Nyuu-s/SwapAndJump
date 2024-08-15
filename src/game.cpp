@@ -29,6 +29,30 @@ bool is_down(GameInputType type)
     return false;
 }
 
+IVec2 get_grid_pos(IVec2 worldpos)
+{
+    return {(worldpos.x / TILESIZE) , (worldpos.y / TILESIZE)  };
+}
+
+Tile* get_tile(int x, int y)
+{
+    Tile* tile = nullptr;
+    if(x >= 0 && x<WORLD_GRID.x && y >=0 && y < WORLD_GRID.y)
+    {
+        tile = &gameState->worldGrid[x][y];
+    }
+
+    return tile;
+}
+
+Tile* get_tile(IVec2 worldPos)
+{
+    IVec2 gridpos = get_grid_pos(worldPos);
+    return get_tile(gridpos.x, gridpos.y);
+}
+
+
+
 int get_bitmask_index(int x, int y)
 {
   
@@ -76,26 +100,192 @@ int get_bitmask_index(int x, int y)
     return cardinalflags & 0xF;
 }
 
+IRect get_player_aabb()
+{
+    return
+    {
+        gameState->player.pos.x - 4,
+        gameState->player.pos.y -8,
+        8,
+        16
+    };
+}
+
+IVec2 get_tile_pos_from_grid(int x, int y)
+{
+    IVec2 pos =   IVec2{x * TILESIZE, y * TILESIZE};
+    
+    return {(x * TILESIZE), y * TILESIZE};
+
+}
+IRect get_tile_rect(int x, int y)
+{
+    return {get_tile_pos_from_grid(x, y), 8, 8};
+}
 
 void simulate()
 {
-    gameState->player.prevPos = gameState->player.pos;
+    float dt = UPDATE_DELAY;
+    Player& player = gameState->player;
+    player.prevPos = player.pos;
+    
+
+    static Vec2 remainder = {};
+    static bool grounded = false;
+
+    constexpr float runSpeed = 2.0f;
+    constexpr float runAcceleration = 10.0f;
+    constexpr float runReduce = 22.0F;
+    constexpr float flyReduce = 12.0f;
+    constexpr float gravity = 13.0f;
+    constexpr float fallSpeed = 3.6f;
+    constexpr float jumpSpeed = -4.0f;
+    //Jump
+    if(just_pressed(JUMP) && grounded)
+    {
+        player.speed.y = jumpSpeed;
+        grounded = false;
+    }
     if(is_down(MOVE_LEFT))
     {
-        gameState->player.pos.x -= 1;
+        float mult = 1.0f;
+        if(player.speed.x > 0.0f)
+        {
+            mult = 3.0;
+        }
+        player.speed.x = approach(player.speed.x, -runSpeed, runAcceleration * mult * dt);
     }
+    if(is_down(MOVE_RIGHT))
+    {
+        float mult = 1.0f;
+        if(player.speed.x < 0.0f)
+        {
+            mult = 3.0;
+        }
+        player.speed.x = approach(player.speed.x, runSpeed, runAcceleration * mult * dt);
+    }
+    //Friction
+    if(!is_down(MOVE_LEFT) && !is_down(MOVE_RIGHT))
+    {
+        if(grounded)
+        {
+            player.speed.x = approach(player.speed.x, 0, runReduce * dt);
+        }
+        else
+        {
+            player.speed.x = approach(player.speed.x, 0, flyReduce * dt);
+        }
+    }
+    //Gravity
+    player.speed.y = approach(player.speed.y, fallSpeed, gravity * dt);
+
     if(is_down(MOVE_UP))
     {
-        gameState->player.pos.y -= 1;
+        player.pos = {};
     }
-       if(is_down(MOVE_DOWN))
+    
+    // MOVE X
     {
-        gameState->player.pos.y += 1;
+        IRect playerRect = get_player_aabb();
+
+        remainder.x += player.speed.x;
+        int moveX = round(remainder.x);
+
+        if(moveX != 0)
+        {
+            remainder.x -= moveX;
+            int moveSign = sign(moveX); // return 1 or -1
+            bool didCollide = false;
+
+            // move the player in Y until colliison or moveY is exhausted
+            //lambda function
+            auto movePlayerX = [&]
+            {
+                while (moveX)   
+                {
+                    playerRect.pos.x += moveSign;
+
+                    IVec2 playerGridPos = get_grid_pos(player.pos);
+                    for (size_t x = playerGridPos.x - 1; x <= playerGridPos.x + 1; x++)
+                    {
+                        for (size_t y = playerGridPos.y - 2; y <= playerGridPos.y + 2; y++)
+                        {
+                            Tile* tile = get_tile(x, y);
+                            if(!tile || !tile->isVisible)
+                            {
+                                continue;
+                            }
+
+                            IRect tileRect = get_tile_rect(x, y);
+                            if(rect_collision(playerRect, tileRect))
+                            {
+                                player.speed.x = 0;
+                                return;
+                            }
+                        }
+                        
+                    }
+                    player.pos.x += moveSign;
+                    moveX -= moveSign;   
+                }
+            };
+            movePlayerX();
+        }
     }
-       if(is_down(MOVE_RIGHT))
+    // MOVE Y
     {
-        gameState->player.pos.x += 1;
+        IRect playerRect = get_player_aabb();
+
+        remainder.y += player.speed.y;
+        int moveY = round(remainder.y);
+
+        if(moveY != 0)
+        {
+            remainder.y -= moveY;
+            int moveSign = sign(moveY); // return 1 or -1
+            bool didCollide = false;
+
+            // move the player in Y until colliison or moveY is exhausted
+            //lambda function
+            auto movePlayerY = [&]
+            {
+                while (moveY)   
+                {
+                    playerRect.pos.y += moveSign;
+
+                    IVec2 playerGridPos = get_grid_pos(player.pos);
+                    for (size_t x = playerGridPos.x - 1; x <= playerGridPos.x + 1; x++)
+                    {
+                        for (size_t y = playerGridPos.y - 2; y <= playerGridPos.y + 2; y++)
+                        {
+                            Tile* tile = get_tile(x, y);
+                            if(!tile || !tile->isVisible)
+                            {
+                                continue;
+                            }
+
+                            IRect tileRect = get_tile_rect(x, y);
+                            if(rect_collision(playerRect, tileRect))
+                            {
+                                if(player.speed.y > 0.0f)
+                                {
+                                    grounded = true;
+                                }
+                                player.speed.y = 0;
+                                return;
+                            }
+                        }
+                        
+                    }
+                    player.pos.y += moveSign;
+                    moveY -= moveSign;   
+                }
+            };
+            movePlayerY();
+        }
     }
+
+ 
     bool shouldUpdateTiles = false;
     if(is_down(MOUSE_LEFT))
     {
@@ -153,10 +343,7 @@ EXPORT_FN void update_game(GameState* gameStateIn, RenderData* data, Input* inpu
         renderData->gameCamera.dimensions = {WORLD_WIDTH, WORLD_HEIGHT};
         renderData->gameCamera.position.x = 160;
         renderData->gameCamera.position.y = -90;
-        gameState->player.pos = IVec2{
-            160 + 40 ,
-            90 + 20 
-            };
+
      
         {
             gameState->keyMappings[MOVE_UP].keys.add(KEY_Z);
@@ -167,7 +354,7 @@ EXPORT_FN void update_game(GameState* gameStateIn, RenderData* data, Input* inpu
             gameState->keyMappings[MOVE_RIGHT].keys.add(KEY_ARROW_RIGHT);
             gameState->keyMappings[MOVE_DOWN].keys.add(KEY_S);
             gameState->keyMappings[MOVE_DOWN].keys.add(KEY_ARROW_DOWN);
-
+            gameState->keyMappings[JUMP].keys.add(KEY_SPACE);
             gameState->keyMappings[MOUSE_LEFT].keys.add(KEY_MOUSE_LEFT);
             gameState->keyMappings[MOUSE_RIGHT].keys.add(KEY_MOUSE_RIGHT);
         } 
@@ -210,30 +397,33 @@ EXPORT_FN void update_game(GameState* gameStateIn, RenderData* data, Input* inpu
     {
         Player& player = gameState->player;
         draw_sprite(SPRITE_CHARACHTER, lerp(player.prevPos, player.pos, (float)interpolatedDT));
+        // draw_sprite(SPRITE_CHARACHTER, player.pos);
       
     }
 
 
     //DRAW TILES 
     IVec2 initialSpriteOffset = {7*16, 0};
-    for (size_t i = 0; i < WORLD_GRID.y; i++)
+    for (int i = 0; i < WORLD_GRID.y; i++)
     {
-     for (size_t j = 0; j < WORLD_GRID.x; j++)
+     for (int j = 0; j < WORLD_GRID.x; j++)
      {
         Tile* tile = get_tile(j, i);
+        // tile->isVisible = true;
+        // tile->neighbourMask = 20;
         if(j == WORLD_GRID.x/2 && i == WORLD_GRID.y / 2)
         {
             tile->isVisible = true;
             tile->neighbourMask = 20;
         }
-        if(!tile->isVisible)
+
+        if(!tile || !tile->isVisible)
         {
             continue;
         }
 
-
         SpriteTransform transform = {};
-        Vec2 fpos =   Vec2{j * (float)TILESIZE + (float)TILESIZE/2.0f, i * (float)TILESIZE + (float)TILESIZE/2.0f} - Vec2{TILESIZE, TILESIZE} / 2.0;
+        Vec2 fpos =   Vec2{j * (float)TILESIZE, i * (float)TILESIZE};
         transform.pos = {(int) fpos.x, (int)fpos.y};
         transform.size = {TILESIZE, TILESIZE};
         transform.spriteSize = {TILESIZE, TILESIZE};

@@ -239,8 +239,8 @@ void gl_render(BumpAllocator* transientStorage)
     {
         //Copy transform to the GPU
         glBufferSubData(GL_SHADER_STORAGE_BUFFER, 0, sizeof(SpriteTransform) * renderData->transforms.count,renderData->transforms.elements);
-        
         glDrawArraysInstanced(GL_TRIANGLES, 0, 6, renderData->transforms.count);
+        
 
         //reset for next frame 
         renderData->transforms.clear();
