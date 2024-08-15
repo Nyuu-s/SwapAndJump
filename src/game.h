@@ -45,17 +45,28 @@ struct Player
     IVec2 pos;
     IVec2 prevPos;
     Vec2 speed;
+    Vec2 solidSpeed;
+};
+
+struct Solid {
+    SpriteID spriteID;
+    IVec2 pos;
+    IVec2 prevPos;
+    Vec2 remainder;
+    Vec2 speed;
+    int keyframeidx;
+    ArrayDef(IVec2, 2) keyframes;
 };
 
 struct GameState
 {
     bool initialized = false;
     double dtAccumulator = 0.0;
-
     Player player;
 
     KeyMapping keyMappings[GAME_INPUT_COUNT];
     Tile worldGrid[WORLD_GRID.x][WORLD_GRID.y];
+    ArrayDef(Solid, 20) solids;
 };
 
 static GameState* gameState;
