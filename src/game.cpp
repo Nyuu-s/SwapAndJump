@@ -148,7 +148,8 @@ void simulate()
     //Jump
     if(just_pressed(JUMP) && grounded)
     {
-        player.speed.y = jumpSpeed;
+        player.speed.y = (int)jumpSpeed + player.solidSpeed.y; 
+        player.speed.x = player.speed.x + player.solidSpeed.x;
         grounded = false;
     }
     if(is_down(MOVE_LEFT))
@@ -186,7 +187,7 @@ void simulate()
 
     if(is_down(MOVE_UP))
     {
-        player.pos = {};
+        player.pos = {WORLD_WIDTH/2, WORLD_HEIGHT-24};
     }
     
     // MOVE X
@@ -209,23 +210,26 @@ void simulate()
                 {
                     playerRect.pos.x += moveSign;
 
-                    //test solids collide
-                    for (size_t solidIdx = 0; solidIdx < gameState->solids.count; solidIdx++)
                     {
-                        Solid& solid = gameState->solids.elements[solidIdx];
-                        IRect solidRect = get_solid_rect(solid);
-                        if(rect_collision(playerRect, solidRect))
+
+                        //test solids collide
+                        for (size_t solidIdx = 0; solidIdx < gameState->solids.count; solidIdx++)
                         {
-                            player.speed.x = 0;
-                            return;
+                            Solid& solid = gameState->solids.elements[solidIdx];
+                            IRect solidRect = get_solid_rect(solid);
+                            if(rect_collision(playerRect, solidRect))
+                            {
+                                player.speed.x = 0;
+                                return;
+                            }
                         }
                     }
                     
 
                     IVec2 playerGridPos = get_grid_pos(player.pos);
-                    for (size_t x = playerGridPos.x - 1; x <= playerGridPos.x + 1; x++)
+                    for (int x = playerGridPos.x - 1; x <= playerGridPos.x + 1; x++)
                     {
-                        for (size_t y = playerGridPos.y - 2; y <= playerGridPos.y + 2; y++)
+                        for (int y = playerGridPos.y - 2; y <= playerGridPos.y + 2; y++)
                         {
                             Tile* tile = get_tile(x, y);
                             if(!tile || !tile->isVisible)
@@ -286,9 +290,9 @@ void simulate()
                     }
                     
                     IVec2 playerGridPos = get_grid_pos(player.pos);
-                    for (size_t x = playerGridPos.x - 1; x <= playerGridPos.x + 1; x++)
+                    for (int x = playerGridPos.x - 1; x <= playerGridPos.x + 1; x++)
                     {
-                        for (size_t y = playerGridPos.y - 2; y <= playerGridPos.y + 2; y++)
+                        for (int y = playerGridPos.y - 2; y <= playerGridPos.y + 2; y++)
                         {
                             Tile* tile = get_tile(x, y);
                             if(!tile || !tile->isVisible)
@@ -680,13 +684,7 @@ EXPORT_FN void update_game(GameState* gameStateIn, RenderData* data, Input* inpu
      for (int j = 0; j < WORLD_GRID.x; j++)
      {
         Tile* tile = get_tile(j, i);
-        // tile->isVisible = true;
-        // tile->neighbourMask = 20;
-        if(j == WORLD_GRID.x/2 && i == WORLD_GRID.y / 2)
-        {
-            tile->isVisible = true;
-            tile->neighbourMask = 20;
-        }
+
 
         if(!tile || !tile->isVisible)
         {
