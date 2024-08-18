@@ -103,10 +103,16 @@ int get_bitmask_index(int x, int y)
 }
 
 void load_level(int level){
-    
+    for (int i = 0; i < WORLD_GRID.x; i++)
+    {
+        for (int j = 0; j < WORLD_GRID.y; j++)
+        {
+            gameState->worldGrid[i][j].isVisible = false;  
+        }        
+    }
     switch (level)
     {
-    case 0:
+    case 0: // default square
         {
             for (int i = 0; i < WORLD_GRID.x; i++)
             {
@@ -119,21 +125,63 @@ void load_level(int level){
                 }
                 
             }
-            for (int i = 0; i < WORLD_GRID.x; i++)
-            {
-                for (int j = 0; j < WORLD_GRID.y; j++)
-                {
-                    get_bitmask_index(i, j);
-                }
-            }       
-                
             break;
         }
-    
+    case 1: // full random
+    {
+
+        for (int i = 0; i < WORLD_GRID.x; i++)
+        {
+            for (int j = 0; j < WORLD_GRID.y; j++)
+            {
+                int r2 = rand() % WORLD_GRID.x;
+                int r1 = rand() % WORLD_GRID.y;
+                int dir = rand() % 2;
+                IVec2 playerpos = get_grid_pos(gameState->player.pos);
+                if((r2 <= playerpos.x + 3 && r2 >= playerpos.x - 3) && (r1 < playerpos.y + 2) && r1 >= playerpos.y - 3 )
+                {
+                    continue;
+                }
+                // SAJ_DEBUG("%d", r1)
+                // SAJ_DEBUG("%d", r2)
+                 if(
+                    !gameState->worldGrid[r2][r1-1].isVisible && !gameState->worldGrid[r2][r1+1].isVisible &&
+                    !gameState->worldGrid[r2+1][r1].isVisible && !gameState->worldGrid[r2-1][r1].isVisible )
+                 {
+                    gameState->worldGrid[r2][r1].isVisible = true;
+                    if(dir == 0)
+                    {
+                        if(r1 - 1 > 0)
+                        {
+                            gameState->worldGrid[r2][r1-1].isVisible = true;
+                        }
+                        if(r1+1){
+                            gameState->worldGrid[r2][r1+1].isVisible = true;    
+                        }
+               
+
+                    }else
+                    {
+                        if(r2-1 > 0)
+                        {
+                            gameState->worldGrid[r2-1][r1].isVisible = true;
+                        }
+                        if(r2+1 < WORLD_GRID.x)
+                        {
+                            gameState->worldGrid[r2+1][r1].isVisible = true;
+                        }
+                    }
+                }
+            }   
+        }
+        break;
+    } 
     default:
         break;
     }
     
+
+        
 }
 
 
@@ -167,6 +215,7 @@ IRect get_solid_rect(Solid solid)
 }
 void simulate()
 {
+    bool shouldUpdateTiles = false;
     float dt = UPDATE_DELAY;
     Player& player = gameState->player;
     player.prevPos = player.pos;
@@ -226,7 +275,11 @@ void simulate()
     {
         player.pos = {WORLD_WIDTH/2, WORLD_HEIGHT-24};
     }
-    
+    if(is_down(GENERATE_LEVEL))
+    {
+        load_level(1);
+        shouldUpdateTiles = true;
+    }
     // MOVE X
     {
         IRect playerRect = get_player_aabb();
@@ -508,68 +561,12 @@ void simulate()
                 moveSolidY();
                 }
             }
-            //Move solid y
-            // {
-            //     solid.remainder.y += solid.speed.y * dt;
-            //     int moveY = round(solid.remainder.y);
-            //     if(moveY != 0)
-            //     {
-            //         solid.remainder.y -= moveY;
-            //         // vector direction between current platform pos and its target --> or <--
-            //         int moveSign = sign(solid.keyframes.elements[nextKeyFrameIdx].y - solid.keyframes.elements[solid.keyframeidx].y);
-            //         auto moveSolidY = [&]
-            //         {
-            //             while (moveY)   
-            //             {
-            //                 IRect playerRect = get_player_aabb();
-            //                 solidRect.pos.x += moveSign;
 
-            //                 if(rect_collision(playerRect, solidRect))
-            //                 {
-            //                     player.pos.y += moveSign;
-            //                     player.solidSpeed.y = solid.speed.y * (float)moveSign / 40.0f;
-
-            //                     IVec2 playerGridPos = get_grid_pos(player.pos);
-                                
-            //                     for (size_t x = playerGridPos.x - 1; x <= playerGridPos.x + 1; x++)
-            //                     {
-            //                         for (size_t y = playerGridPos.y - 2; y <= playerGridPos.y + 2; y++)
-            //                         {
-            //                             Tile* tile = get_tile(x, y);
-            //                             if(!tile || !tile->isVisible)
-            //                             {
-            //                                 continue;
-            //                             }
-
-            //                             IRect tileRect = get_tile_rect(x, y);
-            //                             if(rect_collision(playerRect, tileRect))
-            //                             {
-            //                                 //dead
-            //                                 player.pos = {WORLD_WIDTH / 2, WORLD_HEIGHT - 24};
-            //                             }
-            //                         }
-            //                     }
-            //                 }
-
-            //                 solid.pos.y += moveSign;
-            //                 moveY -= 1;
-            //                 if(solid.pos.y == solid.keyframes.elements[nextKeyFrameIdx].y)
-            //                 {
-            //                     solid.keyframeidx = nextKeyFrameIdx;
-            //                     nextKeyFrameIdx++;
-            //                     nextKeyFrameIdx %= solid.keyframes.count;
-            //                 }   
-            //             }
-            //         };
-            //         moveSolidY();
-            //     }
-            // }
         }
         
     }
 
  
-    bool shouldUpdateTiles = false;
     if(is_down(MOUSE_LEFT))
     {
         IVec2 mousePos = input->mousePositionWorld;
@@ -627,6 +624,9 @@ EXPORT_FN void update_game(GameState* gameStateIn, RenderData* data, Input* inpu
         renderData->gameCamera.position.x = 160;
         renderData->gameCamera.position.y = -90;
 
+        gameState->player.pos = {WORLD_WIDTH/2, WORLD_HEIGHT - 20};
+
+        srand(deltatime);
         load_level(0);
         //Solids
         {
@@ -663,6 +663,9 @@ EXPORT_FN void update_game(GameState* gameStateIn, RenderData* data, Input* inpu
             gameState->keyMappings[JUMP].keys.add(KEY_SPACE);
             gameState->keyMappings[MOUSE_LEFT].keys.add(KEY_MOUSE_LEFT);
             gameState->keyMappings[MOUSE_RIGHT].keys.add(KEY_MOUSE_RIGHT);
+
+            gameState->keyMappings[GENERATE_LEVEL].keys.add(KEY_E);
+            
         } 
 
    

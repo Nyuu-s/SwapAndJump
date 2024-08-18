@@ -3,7 +3,7 @@
 #include "input.h"
 #include "SAJ_lib.h"
 #include "gl_render_interface.h"
-
+#include <stdlib.h>
 
 constexpr int WORLD_WIDTH = 320;
 constexpr int WORLD_HEIGHT = 180;
@@ -22,6 +22,7 @@ enum GameInputType
     JUMP,
     MOUSE_LEFT,
     MOUSE_RIGHT,
+    GENERATE_LEVEL,
 
     GAME_INPUT_COUNT
 };
