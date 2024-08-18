@@ -1,8 +1,10 @@
 #include "game.h"
 #include "assets.h"
+#include "levels.cpp"
 //########################################################################
 // Internal Game Functions
 //########################################################################
+
 bool just_pressed(GameInputType type)
 {
     KeyMapping mapping = gameState->keyMappings[type];
@@ -99,6 +101,41 @@ int get_bitmask_index(int x, int y)
     tile->neighbourMask = cardinalflags & 0xF;
     return cardinalflags & 0xF;
 }
+
+void load_level(int level){
+    
+    switch (level)
+    {
+    case 0:
+        {
+            for (int i = 0; i < WORLD_GRID.x; i++)
+            {
+                for (int j = 0; j < WORLD_GRID.y; j++)
+                {
+                    if(i == 0 || i == WORLD_GRID.x -1  || j == 0 || j == WORLD_GRID.y - 1)
+                    {
+                        gameState->worldGrid[i][j].isVisible = true;
+                    }
+                }
+                
+            }
+            for (int i = 0; i < WORLD_GRID.x; i++)
+            {
+                for (int j = 0; j < WORLD_GRID.y; j++)
+                {
+                    get_bitmask_index(i, j);
+                }
+            }       
+                
+            break;
+        }
+    
+    default:
+        break;
+    }
+    
+}
+
 
 IRect get_player_aabb()
 {
@@ -413,15 +450,16 @@ void simulate()
                 solid.remainder.y -= moveY;
                 int moveSign = sign(solid.keyframes.elements[nextKeyFrameIdx].y - 
                                     solid.keyframes.elements[solid.keyframeidx].y);
-
                 // Move the player in Y until collision or moveY is exausted
                 auto moveSolidY = [&]
                 {
                     while(moveY)
                     {
                     IRect playerRect = get_player_aabb();
-                    solidRect.pos.x += moveSign;
+                    solidRect.pos.y += moveSign;
 
+                    //take the extra pixel into account for collision
+                    bool standingOnTop = playerRect.pos.y - 1 + playerRect.size.y == solidRect.pos.y;
                     // Collision happend on bottom, push the player
                     if(rect_collision(playerRect, solidRect))
                     {
@@ -440,13 +478,16 @@ void simulate()
 
                             if(!tile || !tile->isVisible)
                             {
-                            continue;
+                                continue;
                             }
 
                             IRect tileRect = get_tile_rect(x, y);
                             if(rect_collision(playerRect, tileRect))
                             {
-                            player.pos = {WORLD_WIDTH / 2,  WORLD_HEIGHT - 24};
+                                if(!standingOnTop)
+                                {
+                                    player.pos = {WORLD_WIDTH / 2,  WORLD_HEIGHT - 24};
+                                }
                             }
                         }
                         }
@@ -586,8 +627,7 @@ EXPORT_FN void update_game(GameState* gameStateIn, RenderData* data, Input* inpu
         renderData->gameCamera.position.x = 160;
         renderData->gameCamera.position.y = -90;
 
-        
-
+        load_level(0);
         //Solids
         {
             Solid solid = {};

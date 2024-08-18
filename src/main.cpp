@@ -22,6 +22,7 @@ static KeyCodeBinding KeyCodeLookupTable[KEYCODE_COUNT];
 #include "gl_render_interface.h"
 #include "gl_renderer.cpp"
 
+
 //TODO training replace by own header
 #include <chrono>
 double get_delta_time();
@@ -44,8 +45,6 @@ int main()
 
     BumpAllocator transientStorage = make_bump_allocator(MB(50));
     BumpAllocator persistentStorage = make_bump_allocator(MB(15));
-
-
 
     input=(Input*)bump_alloc(&persistentStorage, sizeof(Input));
     renderData = (RenderData*) bump_alloc(&persistentStorage, sizeof(RenderData));
