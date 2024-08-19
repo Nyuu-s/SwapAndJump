@@ -41,6 +41,8 @@ struct KeyMapping
   ArrayDef(KeyCodeBinding, 3) keys;  
 };
 
+
+
 struct Player 
 {
     IVec2 pos;
@@ -59,14 +61,22 @@ struct Solid {
     ArrayDef(IVec2, 2) keyframes;
 };
 
+struct TileGroup
+{
+    ArrayDef(int, 9) idxArray;
+};
+
+
 struct GameState
 {
     bool initialized = false;
     double dtAccumulator = 0.0;
     Player player;
 
+
     KeyMapping keyMappings[GAME_INPUT_COUNT];
     Tile worldGrid[WORLD_GRID.x][WORLD_GRID.y];
+    ArrayDef(TileGroup,  10) possibleTiles;
     ArrayDef(Solid, 20) solids;
 };
 

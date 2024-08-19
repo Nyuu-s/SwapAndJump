@@ -130,48 +130,41 @@ void load_level(int level){
     case 1: // full random
     {
 
-        for (int i = 0; i < WORLD_GRID.x; i++)
+        for (int i = 1; i < WORLD_GRID.x; i+=3)
         {
-            for (int j = 0; j < WORLD_GRID.y; j++)
+            for (int j = 0; j < WORLD_GRID.y; j+=3)
             {
-                int r2 = rand() % WORLD_GRID.x;
-                int r1 = rand() % WORLD_GRID.y;
-                int dir = rand() % 2;
+                int r1 = rand() % gameState->possibleTiles.count;
+
                 IVec2 playerpos = get_grid_pos(gameState->player.pos);
-                if((r2 <= playerpos.x + 3 && r2 >= playerpos.x - 3) && (r1 < playerpos.y + 2) && r1 >= playerpos.y - 3 )
-                {
-                    continue;
-                }
+                // if((r2 <= playerpos.x + 3 && r2 >= playerpos.x - 3) && (r1 < playerpos.y + 2) && r1 >= playerpos.y - 3 )
+                // {
+                //     continue;
+                // }
                 // SAJ_DEBUG("%d", r1)
                 // SAJ_DEBUG("%d", r2)
-                 if(
-                    !gameState->worldGrid[r2][r1-1].isVisible && !gameState->worldGrid[r2][r1+1].isVisible &&
-                    !gameState->worldGrid[r2+1][r1].isVisible && !gameState->worldGrid[r2-1][r1].isVisible )
-                 {
-                    gameState->worldGrid[r2][r1].isVisible = true;
-                    if(dir == 0)
+                int count = 0;
+                for (int x = -1; x < 2; x++)
+                {
+                    for (int y = -1; y < 2; y++)
                     {
-                        if(r1 - 1 > 0)
+                        if(gameState->possibleTiles.elements[r1].idxArray.elements[count] != 0)
                         {
-                            gameState->worldGrid[r2][r1-1].isVisible = true;
+                            gameState->worldGrid[i+x][j+y].isVisible = true;
                         }
-                        if(r1+1){
-                            gameState->worldGrid[r2][r1+1].isVisible = true;    
-                        }
+                        count++;
+                    }
+                    
+                }
+                
+                 
+                   
+   
                
 
-                    }else
-                    {
-                        if(r2-1 > 0)
-                        {
-                            gameState->worldGrid[r2-1][r1].isVisible = true;
-                        }
-                        if(r2+1 < WORLD_GRID.x)
-                        {
-                            gameState->worldGrid[r2+1][r1].isVisible = true;
-                        }
-                    }
-                }
+            
+                    
+                
             }   
         }
         break;
@@ -625,7 +618,14 @@ EXPORT_FN void update_game(GameState* gameStateIn, RenderData* data, Input* inpu
         renderData->gameCamera.position.y = -90;
 
         gameState->player.pos = {WORLD_WIDTH/2, WORLD_HEIGHT - 20};
-
+        //Creates possible tile goup
+        {
+          
+            gameState->possibleTiles.add({3, 1000, 0, 1, 0, 0, 1, 0, 0, 1, 0}); // vertival 3x1 bar
+            gameState->possibleTiles.add({3,1000,  0, 0, 0, 1, 1, 1, 0, 0, 0}); // horizontal bar 3x1
+            gameState->possibleTiles.add({3,1000,  0, 1, 0, 1, 1, 0, 0, 0, 0}); // small inverse L
+            gameState->possibleTiles.add({3,1000,  0, 0, 1, 0, 0, 1, 1, 1, 1}); // bigger inverse L
+        }
         srand(deltatime);
         load_level(0);
         //Solids
