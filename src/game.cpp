@@ -135,6 +135,7 @@ void load_level(int level){
             for (int j = 0; j < WORLD_GRID.y; j+=3)
             {
                 int r1 = rand() % gameState->possibleTiles.count;
+                int r2 = rand() % 4;
 
                 IVec2 playerpos = get_grid_pos(gameState->player.pos);
                 // if((r2 <= playerpos.x + 3 && r2 >= playerpos.x - 3) && (r1 < playerpos.y + 2) && r1 >= playerpos.y - 3 )
@@ -148,7 +149,7 @@ void load_level(int level){
                 {
                     for (int y = -1; y < 2; y++)
                     {
-                        if(gameState->possibleTiles.elements[r1].idxArray.elements[count] != 0)
+                        if(r2 != 0 && gameState->possibleTiles.elements[r1].idxArray.elements[count] != 0)
                         {
                             gameState->worldGrid[i+x][j+y].isVisible = true;
                         }
@@ -620,11 +621,18 @@ EXPORT_FN void update_game(GameState* gameStateIn, RenderData* data, Input* inpu
         gameState->player.pos = {WORLD_WIDTH/2, WORLD_HEIGHT - 20};
         //Creates possible tile goup
         {
-          
-            gameState->possibleTiles.add({3, 1000, 0, 1, 0, 0, 1, 0, 0, 1, 0}); // vertival 3x1 bar
+            /*
+                |0|1|2|
+                |3|4|5|
+                |6|7|8|
+            */
+            gameState->possibleTiles.add({3,1000,  0, 1, 0, 0, 1, 0, 0, 1, 0}); // vertival 3x1 bar
             gameState->possibleTiles.add({3,1000,  0, 0, 0, 1, 1, 1, 0, 0, 0}); // horizontal bar 3x1
-            gameState->possibleTiles.add({3,1000,  0, 1, 0, 1, 1, 0, 0, 0, 0}); // small inverse L
-            gameState->possibleTiles.add({3,1000,  0, 0, 1, 0, 0, 1, 1, 1, 1}); // bigger inverse L
+            gameState->possibleTiles.add({4,1000,  0, 1, 0, 1, 1, 0, 0, 0, 0}); // small inverse L
+            gameState->possibleTiles.add({5,1000,  0, 0, 1, 0, 0, 1, 1, 1, 1}); // bigger inverse L
+            gameState->possibleTiles.add({5,1000,  0, 1, 0, 0, 1, 1, 0, 0, 0}); // small L
+            gameState->possibleTiles.add({5,1000,  1, 0, 0, 1, 0, 0, 1, 1, 1}); // bigger L
+            gameState->possibleTiles.add({5,1000,  1, 0, 1, 1, 0, 1, 1, 1, 1}); // U shape
         }
         srand(deltatime);
         load_level(0);
